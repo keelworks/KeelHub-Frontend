@@ -3,7 +3,7 @@ import Modal from "react-modal";
 import axios from "axios";
 import VolunteerInfoModal from "./VolunteerInfoModal";
 import { UserContext } from "../context/UserContext";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 const UserInfoModal = ({
   userId,
@@ -14,6 +14,7 @@ const UserInfoModal = ({
 }) => {
   const { login } = useContext(UserContext);
   const token = localStorage.getItem("token");
+  
   const [currentUser, setCurrentUser] = useState(null);
   useEffect(() => {
     const fetchUser = async () => {
@@ -26,8 +27,8 @@ const UserInfoModal = ({
             },
           }
         );
-        console.log("current user: ", response.data);
         setCurrentUser(response.data);
+        localStorage.setItem("currentUser", JSON.stringify(response.data));
       } catch (error) {
         console.log(error);
       }
@@ -43,9 +44,10 @@ const UserInfoModal = ({
     city: "",
     phone: "",
     timezone: "",
+    profile_pic: "",
+    is_image_uploaded: ""
   });
   const [showVolunteerInfo, setShowVolunteerInfo] = useState(false);
-
   useEffect(() => {
     if (isOpen && currentUser) {
       setUserInfo({
@@ -56,9 +58,62 @@ const UserInfoModal = ({
         city: currentUser.city,
         phone: currentUser.phone,
         timezone: currentUser.timezone,
+        profile_pic: currentUser.profile_pic,
+        is_image_uploaded: currentUser.is_image_uploaded
       });
     }
   }, [isOpen, currentUser]);
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileSelectedHandler = event =>{
+    setSelectedFile(event.target.files[0]);
+    console.log(event.target.files[0]);
+  }
+  const [uploadStatus, setUploadStatus] = useState('');
+  
+  // my code handle upload
+  const handleUpload = async (e) => {
+    e.preventDefault();
+  
+    if (!selectedFile) {
+      setUploadStatus('Please select a file first.');
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('profile_pic', selectedFile); // Append the file
+    formData.append('first_name', userInfo.first_name);
+    formData.append('last_name', userInfo.last_name);
+    formData.append('city', userInfo.city);
+    formData.append('phone', userInfo.phone);
+    formData.append('timezone', userInfo.timezone);
+    formData.append('hasLoggedIn', true); // Add other required fields
+  
+    try {
+      const response = await axios.post(
+        `http://localhost:3001/api/users/${userId}`, // Use PUT request
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        setUploadStatus('Image uploaded successfully!');
+        toast.success('Image uploaded successfully!');
+        setUserInfo({ ...userInfo, profile_pic: response.data.fileObj, is_image_uploaded: true });
+      } else {
+        setUploadStatus('Failed to upload image.');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setUploadStatus('An error occurred during the upload.');
+    }
+  };
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -213,6 +268,13 @@ const UserInfoModal = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
             />
           </div>
+          <div>
+          <label>Profile picture</label>
+          <input type="file" accept="image/*" onChange={fileSelectedHandler} /> 
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onClick={handleUpload}>Upload</button>
+          {uploadStatus && <p>{uploadStatus}</p>}
+          </div>
+          
           <button
             type="submit"
             className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"

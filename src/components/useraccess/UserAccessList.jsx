@@ -1,102 +1,46 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import ReactPaginate from "react-paginate";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import img from "../../assets/defaultUser.jpg";
-import { FaInfoCircle, FaChevronDown } from "react-icons/fa";
+import { FaInfoCircle, FaChevronDown, FaEllipsisH } from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-toastify";
+import AccessLevelModal from "./AccessLevelModal";
+import UpdateRoleModal from "./UpdateRoleModal";
+import ManageAccess from "./ManageAccess";
 
 const AccessLevelBadge = ({ user, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const levels = {
     1: { bg: "bg-green-100", text: "text-green-800" },
     2: { bg: "bg-yellow-100", text: "text-yellow-800" },
     3: { bg: "bg-blue-100", text: "text-blue-800" },
   };
-  //   console.log(user);
+
   const { bg, text } = levels[user.access_level] || levels["1"];
 
-  const handleLevelSelect = (newLevel) => {
-    setSelectedLevel(newLevel);
-    setIsOpen(false);
-    setIsConfirmOpen(true);
-  };
-
-  const handleConfirm = () => {
-    // console.log("selectedLevel: ", selectedLevel);
-    onChange(user.id, selectedLevel);
-    setIsConfirmOpen(false);
+  const handleConfirm = (newLevel) => {
+    onChange(user.id, newLevel);
+    setIsModalOpen(false);
   };
 
   return (
     <div className="relative">
       <div
         className={`inline-flex items-center px-3 py-1 rounded-full ${bg} ${text} cursor-pointer`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsModalOpen(true)}
       >
         <span className="text-sm font-medium">Level {user.access_level}</span>
         <FaChevronDown className="ml-1" />
       </div>
-      {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white border rounded shadow-lg">
-          {Object.keys(levels).map((lvl) => (
-            <div
-              key={lvl}
-              className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
-                lvl === user.access_level ? "font-bold" : ""
-              }`}
-              onClick={() => handleLevelSelect(lvl)}
-            >
-              Level {lvl}
-            </div>
-          ))}
-        </div>
-      )}
-      {isConfirmOpen && (
-        <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
-          style={{ zIndex: 1000 }}
-        >
-          <div
-            className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
-            id="my-modal"
-          >
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-              <div className="mt-3 text-center">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  Change Access Level
-                </h3>
-                <div className="mt-2 px-7 py-3">
-                  <p className="text-sm text-gray-500">
-                    Are you sure you want to change {user.first_name}{" "}
-                    {user.last_name}'s access level to Level {selectedLevel}?
-                  </p>
-                </div>
-                <div className="items-center px-4 py-3">
-                  <button
-                    id="ok-btn"
-                    className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-24 mr-2"
-                    onClick={handleConfirm}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    id="cancel-btn"
-                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24"
-                    onClick={() => setIsConfirmOpen(false)}
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AccessLevelModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        user={user}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 };
@@ -104,11 +48,33 @@ const AccessLevelBadge = ({ user, onChange }) => {
 const UserAccessList = () => {
   const token = localStorage.getItem("token");
   const location = useLocation();
-  const { users: initialUsers, role } = location.state || {};
-  const [users, setUsers] = useState(initialUsers);
-  console.log("users:", users);
+  const { role } = location.state || {};
+  const [users, setUsers] = useState([]);
+  const [nameSort, setNameSort] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const usersPerPage = 8;
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3001/api/users/by-role/${role}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUsers(response.data);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      }
+    };
+
+    if (role) {
+      fetchUsers();
+    }
+  }, []);
 
   const offset = currentPage * usersPerPage;
   const currentUsers = users.slice(offset, offset + usersPerPage);
@@ -145,6 +111,73 @@ const UserAccessList = () => {
     }
   };
 
+  const sortByName = () => {
+    let newOrder;
+    if (nameSort) {
+      newOrder = [...users].sort((a, b) => {
+        const nameA = `${a.first_name} ${a.last_name}`.toUpperCase();
+        const nameB = `${b.first_name} ${b.last_name}`.toUpperCase();
+
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+
+        return 0;
+      });
+    } else {
+      newOrder = [...users].sort((a, b) => {
+        const nameA = `${a.first_name} ${a.last_name}`.toUpperCase();
+        const nameB = `${b.first_name} ${b.last_name}`.toUpperCase();
+
+        if (nameA < nameB) {
+          return 1;
+        }
+        if (nameA > nameB) {
+          return -1;
+        }
+
+        return 0;
+      });
+    }
+    setUsers(newOrder);
+    setNameSort(!nameSort);
+  };
+
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [isUpdateRoleModalOpen, setIsUpdateRoleModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleEditAccess = (userId) => {
+    // Implement the logic to edit access
+    console.log(`Edit access for user ${userId}`);
+    setActiveDropdown(null);
+  };
+
+  const handleClickUpdateRole = (user) => {
+    console.log(`Update role for user ${user.id}`);
+    setSelectedUser(user);
+    setIsUpdateRoleModalOpen(true);
+    setActiveDropdown(null);
+  };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">{role} Access</h1>
@@ -155,7 +188,11 @@ const UserAccessList = () => {
       <table className="min-w-full bg-white">
         <thead>
           <tr>
-            <th className="py-2 px-4 border-b text-left">Name</th>
+            <th className="py-2 px-4 border-b text-left">
+              <button onClick={sortByName}>
+                Name <span className="ml-1">⏶⏷</span>
+              </button>
+            </th>
             <th className="py-2 px-4 border-b text-left">Access Level</th>
             <th className="py-2 px-4 border-b text-left">Actions</th>
           </tr>
@@ -186,10 +223,38 @@ const UserAccessList = () => {
                   }
                 />
               </td>
+
               <td className="py-2 px-4 border-b">
-                <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2">
-                  Edit Access
-                </button>
+                <div className="relative">
+                  {/* <div className="relative" ref={dropdownRef}> */}
+                  <button
+                    onClick={() =>
+                      setActiveDropdown(
+                        activeDropdown === user.id ? null : user.id
+                      )
+                    }
+                    className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                  >
+                    <FaEllipsisH />
+                  </button>
+                  {activeDropdown === user.id && (
+                    <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-xl z-20 border border-gray-200">
+                      <Link
+                        to={"/user-access/manage-access"}
+                        state={{ user }}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      >
+                        Edit Access
+                      </Link>
+                      <button
+                        onClick={() => handleClickUpdateRole(user)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      >
+                        Update Role
+                      </button>
+                    </div>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
@@ -218,6 +283,11 @@ const UserAccessList = () => {
       <div className="mt-2 text-center text-gray-500">
         Showing {currentUsers.length} of {users.length} results
       </div>
+      <UpdateRoleModal
+        isOpen={isUpdateRoleModalOpen}
+        onClose={() => setIsUpdateRoleModalOpen(false)}
+        user={selectedUser}
+      />
     </div>
   );
 };

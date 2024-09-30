@@ -20,6 +20,18 @@ import Volunteers from "./pages/Volunteers";
 import VolunteerDetail from "./components/volunteers/VolunteerDetail";
 import UserAccessRoles from "./pages/UserAccessRoles";
 import UserAccessList from "./components/useraccess/UserAccessList";
+import ManageAccess from "./components/useraccess/ManageAccess";
+import InviteUser from "./pages/InviteUser";
+import TwoFactorAuth from "./components/TwoFactorAuth";
+import TwoFactorSetUp from "./components/TwoFactorSetUp";
+import AdminDetails from "./components/AdminDetails";
+import VerifiedPage from "./components/VerifiedPage";
+import VerificationFail from "./components/VerificationFail";
+import AccountSuccess from "./components/AccountSuccess";
+import VolunteerHome from "./pages/VolunteerHome";
+import NotificationsPage from "./components/notifications/NotificationPage";
+
+
 
 function App() {
   const { isLoggedIn } = useContext(UserContext);
@@ -30,6 +42,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/google2fapage" element={<Google2FAPage />} />
         <Route path="/" element={<Home />} />
+        <Route path="/2fa" element={<TwoFactorAuth />} />
+        <Route path="/2fa-setup" element={<TwoFactorSetUp />} />
+        <Route path="/admin-details" element={<AdminDetails />} />
+        <Route path="/verified" element={<VerifiedPage />} />
+        <Route path="/verify-fail" element={<VerificationFail />} />
+        <Route path="/acc-success" element={<AccountSuccess />} />
+
+
 
         {/* Public route that renders the Layout without sign-in */}
         <Route
@@ -78,6 +98,20 @@ function App() {
             )
           }
         />
+
+        <Route
+          path="/volunteer-home"
+          element={
+            isLoggedIn ? (
+              <Layout>
+                <VolunteerHome />
+              </Layout>
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+
         <Route
           path="/onboarding/workflow"
           element={
@@ -96,6 +130,18 @@ function App() {
             isLoggedIn ? (
               <Layout>
                 <VolunteerListPage />
+              </Layout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            isLoggedIn ? (
+              <Layout>
+                <NotificationsPage />
               </Layout>
             ) : (
               <Navigate to="/login" />
@@ -144,6 +190,30 @@ function App() {
             isLoggedIn ? (
               <Layout>
                 <UserAccessList />
+              </Layout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/user-access/manage-access"
+          element={
+            isLoggedIn ? (
+              <Layout>
+                <ManageAccess />
+              </Layout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/user-access/invites"
+          element={
+            isLoggedIn ? (
+              <Layout>
+                <InviteUser />
               </Layout>
             ) : (
               <Navigate to="/login" />

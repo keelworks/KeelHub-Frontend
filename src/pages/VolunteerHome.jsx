@@ -10,17 +10,13 @@ import { FaTrashAlt } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
 import UpdateStatusModal from "../components/UpdateStatusModal";
 import DeleteConfirmationModal from "../components/DeleteVolunteerStatusModal";
-import AddVolunteerModalStep1 from "../components/addVolunteer/AddVolunteerStep1"
-import AddVolunteerModalStep2 from "../components/addVolunteer/AddVolunteerStep2";
 import generateUniqueUsername from "../utils/checkUniqueUsername";
-import { addVolunteer } from "../utils/addVolunteer";
 import { rejectTask, approveTask, deleteTask } from "../utils/updateTaskStatus";
 
 
 
-const Dashboard = () => {
+const VolunteerHome = () => {
   const { currentUser } = useContext(UserContext);
-  const [profilePicture, setProfilePicture] = useState("");
   const [showToast, setShowToast] = useState(true);
   const [selectedColumn, setSelectedColumn] = useState(0);
   const [volunteers, setVolunteers] = useState([]);
@@ -39,43 +35,6 @@ const Dashboard = () => {
     else return "1";
   }
 
-  const handleNext = (fullName, role) => {
-    setVolunteerInfo({ fullName, role });
-    setIsStep2Open(true);
-  };
-
-  const handleConfirm = async (info, additionalInfo) => {
-    console.log("Volunteer Info:", info);
-    console.log("Additional Info:", additionalInfo);
-    try {
-      const [first_name, last_name] = info.fullName.split(" ");
-      const sanitized_first_name = first_name.toLowerCase().replace(/\s+/g, "");
-      const sanitized_last_name = last_name.toLowerCase().replace(/\s+/g, "");
-      const baseUsername = await generateUniqueUsername(first_name, last_name);
-      console.log(baseUsername);
-
-      /// after all things 
-      await addVolunteer(
-        baseUsername,
-        "", // password
-        baseUsername, // email
-        info.role ?? "volunteer",
-        handleAccessLevel(info.role ?? "volunteer"),
-        sanitized_first_name,
-        sanitized_last_name,
-        additionalInfo.city ?? "",
-        "", // phone
-        "", // profilePic
-        additionalInfo.timeZone ?? ""
-      );
-      toast.success("Volunteer added successfully");
-    } catch (e) {
-
-      toast.error(`error : ${e}`);
-    }
-
-    /// add volunteer here
-  };
 
   const handleUpdate = (volunteer) => {
     setSelectedVolunteer(volunteer.id); // Store the selected volunteer in state
@@ -149,14 +108,7 @@ const Dashboard = () => {
     if (currentUser) {
       loadVolunteers();
     }
-
-    let imageUrl = currentUser.profile_pic;
-    if (currentUser.fileobj) {
-      imageUrl = `data:${currentUser.fileobj.fileType};base64,${currentUser.fileobj.fileData}`;
-    }
-
-    setProfilePicture(imageUrl);
-  }, [currentUser]);
+  }, [currentUser, showToast]);
 
   if (!currentUser) {
     return <Navigate to="/" />;
@@ -218,43 +170,6 @@ const Dashboard = () => {
       </div>
       <div className="flex flex-col p-2 gap-4">
         <div className="flex">
-          <div className="flex flex-1">
-            <button className={`flex w-48 justify-start items-center border-b-2 ${selectedColumn === 0 && "border-blue-600 text-blue-600"} `} onClick={() => {
-              setActiveRow(-1);
-              setSelectedColumn(0)
-            }}>
-              Pending Reviews
-            </button>
-            <button className={`flex w-48 justify-start items-center border-b-2 ${selectedColumn === 1 && "border-blue-600 text-blue-600"}`} onClick={() => {
-              setSelectedColumn(1)
-              setActiveRow(-1);
-            }}>
-              Past Due
-            </button>
-            <div className="flex border-b-2 border-gray-200 flex-1 w-full" />
-            <div className="flex py-2 border-b-2 border-gray-200">
-              <button
-                onClick={() => setIsStep1Open(true)}
-                className="flex  rounded-md text-white border-blue-600 py-2 w-48 justify-center items-center gap-2" style={{
-                  backgroundColor: "#0A3FC1",
-                }}>
-                <span className="text-md">+</span>
-                <span className="text-md "> New Volunteer</span>
-              </button>
-              <AddVolunteerModalStep1
-                isOpen={isStep1Open}
-                onClose={() => setIsStep1Open(false)}
-                onNext={handleNext}
-              />
-
-              <AddVolunteerModalStep2
-                isOpen={isStep2Open}
-                onClose={() => setIsStep2Open(false)}
-                volunteerInfo={volunteerInfo}
-                onConfirm={handleConfirm}
-              />
-            </div>
-          </div>
 
         </div>
 
@@ -264,7 +179,7 @@ const Dashboard = () => {
           <thead className="flex max-h-12">
             <tr className="flex flex-1 bg-gray-100 border-b border-gray-200 justify-between">
               <th className="flex p-3 min-w-56 font-semibold text-gray-600 flex-1 text-center  items-center hover:text-gray-900 gap-3 ">
-                Name
+                Task
                 <div className="flex flex-col p-2 gap-2" >
                   <button>
                     <span className="flex  flex-col justify-start max-h-4 ">⏶</span>
@@ -273,15 +188,9 @@ const Dashboard = () => {
                     <span className="flex  flex-col   justify-end max-h-3 ">⏷</span>
                   </button>
                 </div>
-
-              </th>
-              <th className="flex p-3 min-w-44 font-semibold text-gray-600 flex-1 text-center ">
-                <button className="flex items-center hover:text-gray-900">
-                  Status
-                </button>
               </th>
               <th className="flex p-3 font-semibold text-gray-600 flex-1 text-center min-w-56 items-center hover:text-gray-900 gap-3 ">
-                {selectedColumn === 1 ? "Due Date" : "Status Change Date"}
+                {selectedColumn === 0 ? "Due Date" : "Status Change Date"}
                 <div className="flex flex-col p-2 gap-2" >
                   <button>
                     <span className="flex  flex-col justify-start max-h-4 ">⏶</span>
@@ -291,9 +200,8 @@ const Dashboard = () => {
                   </button>
                 </div>
               </th>
-              <th className="flex p-3 font-semibold text-gray-600 flex-1 text-center  hover:text-gray-900 items-center gap-3 min-w-64">
-                Task
-
+              <th className="flex p-3 font-semibold text-gray-600 flex-1 text-center min-w-56 items-center hover:text-gray-900 gap-3 ">
+                Status
               </th>
               <th className="flex p-3 font-semibold text-gray-600 flex-1 text-center  items-center hover:text-gray-900 gap-0  min-w-44">
                 Date Created
@@ -311,8 +219,7 @@ const Dashboard = () => {
           </thead>
           <tbody className="flex flex-1 flex-col overflow-scroll">
             {filteredVolunteers?.length === 0 && <div className="flex flex-1 justify-center items-center">
-              {selectedColumn === 0 && filteredVolunteers?.length === 0 && "No pending review tasks to show at the moment"}
-              {selectedColumn === 1 && filteredVolunteers?.length === 0 && "No past due tasks to show at the moment"}
+              {selectedColumn === 0 && filteredVolunteers?.length === 0 && "No past due tasks at the moment"}
             </div>
             }
             {currentVolunteers?.map((volunteer, index) => (
@@ -392,9 +299,7 @@ const Dashboard = () => {
         </table>
 
       </div>
-      <div className="flex flex-1 pl-4 pt-4">
-        <BarChartDashboard />
-      </div>
+      
       <UpdateStatusModal
         isOpen={isUpdateModalOpen}
         onClose={() => {
@@ -418,4 +323,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default VolunteerHome;

@@ -3,30 +3,34 @@ import { Dialog, Transition } from '@headlessui/react';
 import { FiCopy } from 'react-icons/fi';
 
 
-const TaskModal = ({ isOpen, closeModal, onSubmit, initialTask = {}, isTemplateView = false, onCopyTemplate }) => {
+const ExtendDueDateModal = ({ isOpen, closeModal, onSubmit, initialTask = {}, isTemplateView = false, onCopyTemplate }) => {
     const [task, setTask] = useState({
       task_name: '',
       template: '',
+      extendDueDate: 0,
     });
 
     useEffect(() => {
         if (initialTask) {
           setTask({
-            task_name: initialTask.taskName || '',
-            template: initialTask.description || '', 
+            task_name: initialTask.task_name || '',
+            template: initialTask.description || '',
+            extendDueDate: initialTask.extendDueDate || 0, 
           });
-          if (initialTask.taskName == 'All onboarding tasks completed') {
-            setTask({
-              task_name: initialTask.taskName,
-              template:  initialTask.taskName
-            });
-          }
         }
       }, [initialTask]);
   
     const handleChange = (e) => {
       const { name, value } = e.target;
       setTask(prevTask => ({ ...prevTask, [name]: value }));
+    };
+
+    const handleIncrement = () => {
+        setTask(prevTask => ({ ...prevTask, extendDueDate: Math.min(prevTask.extendDueDate + 1, 10) }));
+    };
+
+    const handleDecrement = () => {
+        setTask(prevTask => ({ ...prevTask, extendDueDate: Math.max(prevTask.extendDueDate - 1, 0) }));
     };
   
     const handleSubmit = (e) => {
@@ -67,14 +71,16 @@ const TaskModal = ({ isOpen, closeModal, onSubmit, initialTask = {}, isTemplateV
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      {isTemplateView ? 'Task Details' : (initialTask && initialTask.id ? 'Edit Task' : 'New Task')}
+                      {isTemplateView ? 'Task Details' : 'Edit Task'}
                     </Dialog.Title>
                     {isTemplateView ? (
                       <div className="mt-4">
                         <h4 className="text-md font-medium">Task Name</h4>
                         <p className="text-sm text-gray-500 mb-4">{task.task_name}</p>
-                        <h4 className="text-md font-medium">Template</h4>
-                        <p className="text-sm text-gray-500 mb-2">{task.template}</p>
+                        {task.template && <>
+                            <h4 className="text-md font-medium">Template</h4>
+                            <p className="text-sm text-gray-500 mb-2">{task.template}</p>
+                        
                         <button
                           type="button"
                           className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
@@ -83,33 +89,30 @@ const TaskModal = ({ isOpen, closeModal, onSubmit, initialTask = {}, isTemplateV
                           <FiCopy className="mr-2" />
                           Copy Template
                         </button>
+                        </>}
                       </div>
                     ) : (
                       <form onSubmit={handleSubmit} className="mt-4">
                         <div className="mb-4">
-                          <label htmlFor="task_name" className="block text-sm font-medium text-gray-700">Task*</label>
-                          <input
-                            type="text"
-                            id="task_name"
-                            name="task_name"
-                            value={task.task_name}
-                            onChange={handleChange}
-                            placeholder="Enter task name"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                            required
-                          />
-                        </div>
-                        <div className="mb-4">
-                          <label htmlFor="template" className="block text-sm font-medium text-gray-700">Task Template (Optional)</label>
-                          <textarea
-                            id="template"
-                            name="template"
-                            value={task.template}
-                            onChange={handleChange}
-                            placeholder="e.g. Good [Weekday], [Applicant First Name]. Thank you for reaching out..."
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                            rows="4"
-                          ></textarea>
+                          <label htmlFor="extendDueDate" className="block text-sm font-medium text-gray-700">Estimated Time Completion*</label>
+                          <p className="text-sm text-gray-500 mb-2">Select how many days the task will be due in.</p>
+                          <div className="flex items-center space-x-2">
+                              <button
+                                  type="button"
+                                  className="px-2 py-1 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
+                                  onClick={handleDecrement}
+                              >
+                                  -
+                              </button>
+                              <span>{task.extendDueDate} days</span>
+                              <button
+                                  type="button"
+                                  className="px-2 py-1 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
+                                  onClick={handleIncrement}
+                              >
+                                  +
+                              </button>
+                          </div>
                         </div>
                         <div className="mt-6 flex justify-end space-x-3">
                           <button
@@ -137,4 +140,4 @@ const TaskModal = ({ isOpen, closeModal, onSubmit, initialTask = {}, isTemplateV
       );
     };
     
-    export default TaskModal;
+    export default ExtendDueDateModal;

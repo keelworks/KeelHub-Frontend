@@ -26,7 +26,7 @@ const RoleCard = ({ role, count, isAdmin, users }) => {
         <h3 className="text-lg font-semibold capitalize">{role}</h3>
         <Link
           to={`/user-access/list`}
-          state={{ users, role }}
+          state={{ role }}
           className="text-blue-500 hover:text-blue-600 flex items-center"
         >
           View Details

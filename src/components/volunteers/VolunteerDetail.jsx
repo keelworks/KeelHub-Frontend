@@ -60,7 +60,7 @@ const VolunteerDetail = () => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="flex items-center mb-6">
           <img
-            src={img}
+            src={volunteer.profile_pic || img}
             alt={currentVolunteer?.first_name}
             className="w-24 h-24 rounded-full mr-6"
           />

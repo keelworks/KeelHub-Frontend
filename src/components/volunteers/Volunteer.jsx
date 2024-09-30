@@ -20,7 +20,7 @@ const Volunteer = (props) => {
         <div className="flex items-center">
           <img
             // src={volunteer.avatar_url}
-            src={img}
+            src={volunteer.profile_pic || img}
             alt={`${volunteer.first_name} ${volunteer.last_name}`}
             className="w-10 h-10 rounded-full mr-3"
           />

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Modal from "react-modal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// import "../styles/CreateAccount.css";
+
 
 Modal.setAppElement("#root");
 
@@ -14,6 +14,7 @@ const CreateAccount = ({ isOpen, onClose }) => {
     password: "",
     email: "",
     role: "volunteer",
+    status: "Invitation Sent",
     access_level: "1",
     first_name: "",
     last_name: "",

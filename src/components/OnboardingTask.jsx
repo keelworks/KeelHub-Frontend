@@ -17,7 +17,6 @@ const OnboardingTasks = () => {
 
   useEffect(() => {
     fetchTasks();
-    console.log('1234');
   }, []);
 
   const fetchTasks = async () => {

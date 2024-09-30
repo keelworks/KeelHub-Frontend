@@ -12,7 +12,7 @@ const VolunteerListPage = () => {
     useEffect(() => {
         const fetchVolunteers = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/api/volunteers');
+                const response = await axios.get('http://localhost:3001/api/volunteers/all');
                 setVolunteers(response.data);
                 setLoading(false);
             } catch (error) {

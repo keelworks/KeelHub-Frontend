@@ -15,7 +15,6 @@ const Google2FAPage = () => {
     e.preventDefault();
 
     try {
-      console.log("generate currentUser.secret_2fa:", currentUser.secret_2fa);
       if (currentUser.secret_2fa != null) {
         set2secretCode(currentUser.secret_2fa);
       }
@@ -31,7 +30,6 @@ const Google2FAPage = () => {
   };
 
   useEffect(() => {
-    // console.log("secrete value  = ", currentUser.secret_2fa);
     if (currentUser.secret_2fa == null) {
       generateQrCode();
     } else {
@@ -45,11 +43,8 @@ const Google2FAPage = () => {
         `http://localhost:3001/api/auth/generate2fa`
       );
       const { qrCode, secret } = response.data;
-      // console.log("generate qr code response:", response);
-      // console.log("generate qr code secret:", secret);
       set2secretCode(secret);
       setQrCode(qrCode);
-      // console.log("generate qr code secret value:", secretCode);
     } catch (error) {
       console.error("Error generating QR code:", error);
     }

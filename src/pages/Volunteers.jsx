@@ -1,12 +1,8 @@
 import { useContext, useState, useEffect } from "react";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
 import CreateAccount from "../components/CreateAccount";
 import VolunteersTable from "../components/volunteers/VolunteersTable";
 import ReactPaginate from "react-paginate";
 import { UserContext } from "../context/UserContext";
-// import "../styles/VolunteerDetail.css";
-// import "../styles/VolunteersTable.css";
 import axios from "axios";
 
 const Volunteers = () => {
@@ -225,99 +221,6 @@ const Volunteers = () => {
   );
   const pageCount = Math.ceil(filteredVolunteers.length / volunteersPerPage);
 
-  //   return (
-  //     // <div className="dashboard-grid-container">
-  //     <div>
-  //       <div className="volunteer-actions">
-  //         <div className="filter-container">
-  //           <span className="filter-label">Filter by:</span>
-  //           <div className="filter-buttons">
-  //             <select
-  //               name="Active"
-  //               value={filter.Active}
-  //               onChange={handleFilterChange}
-  //               className="filter-button"
-  //             >
-  //               <option value="All">Active</option>
-  //               <option value={true}>Active</option>
-  //               <option value={false}>Inactive</option>
-  //             </select>
-  //             <select
-  //               name="role"
-  //               value={filter.role}
-  //               onChange={handleFilterChange}
-  //               className="filter-button"
-  //             >
-  //               <option value="">Role</option>
-  //               {jobTitles.map((jobTitle) => (
-  //                 <option key={jobTitle.id} value={jobTitle.title}>
-  //                   {jobTitle.title}
-  //                 </option>
-  //               ))}
-  //             </select>
-  //             <select
-  //               name="status"
-  //               value={filter.status}
-  //               onChange={handleFilterChange}
-  //               className="filter-button"
-  //             >
-  //               <option value="">Status</option>
-  //               <option value="pending">Pending</option>
-  //               <option value="in progress">In Progress</option>
-  //               <option value="completed">Completed</option>
-  //               <option value="unassigned">Unassigned</option>
-  //               <option value="assigned">Assigned</option>
-  //             </select>
-  //             <select
-  //               name="projects"
-  //               value={filter.projects}
-  //               onChange={handleFilterChange}
-  //               className="filter-button"
-  //             >
-  //               <option value="All">Projects</option>
-  //               <option value="Website Redesign">Website Redesign</option>
-  //               <option value="Portfolio Builder">Portfolio Builder</option>
-  //             </select>
-  //             <button
-  //               onClick={() => {
-  //                 setFilteredVolunteers(volunteers);
-  //                 setFilter(defaultFilter);
-  //               }}
-  //             >
-  //               Clear Filter
-  //             </button>
-  //           </div>
-  //         </div>
-  //         <div className="action-buttons">
-  //           <button className="assign-project-btn">Assign Project</button>
-  //           <button className="new-volunteer-btn" onClick={openModal}>
-  //             + New Volunteer
-  //           </button>
-  //         </div>
-  //       </div>
-
-  //       <VolunteersTable
-  //         volunteers={currentVolunteers}
-  //         // volunteers={filteredVolunteers}
-  //         sortByName={sortByName}
-  //         sortByHrs={sortByHrs}
-  //         sortByRole={sortByRole}
-  //         sortByStartDate={sortByStartDate}
-  //       />
-
-  //       <ReactPaginate
-  //         previousLabel={"Previous"}
-  //         nextLabel={"Next"}
-  //         pageCount={pageCount}
-  //         onPageChange={handlePageChange}
-  //         containerClassName={"pagination"}
-  //         activeClassName={"active"}
-  //       />
-  //       <div>showing {filteredVolunteers.length} results</div>
-
-  //       <CreateAccount isOpen={isModalOpen} onClose={closeModal} />
-  //     </div>
-  //   );
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
