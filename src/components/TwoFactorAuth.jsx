@@ -58,14 +58,14 @@ const TwoFactorAuth = () => {
           <div className="w-[530px] h-[300px] pr-15 mt-auto pl-10 mb-[180px]">
             <h3 className="text-black pl-4 pt-4 text-5xl">Two factor</h3>
             <h3 className="text-black pl-4 pt-4 text-5xl">authentication</h3>
-            <h2 className="pl-5 pt-3 mb-3 text-gray-600">Using the Google Authenticator app get your 
-              one time code 
+            <h2 className="pl-5 pt-3 mb-3 text-gray-600">Get your one-time verification code using Google 
+              Authenticator App or Extension
             </h2>
-            <a onClick={()=> setOpenModal(!openModal) } className="text-blue-500 pl-4 pt-4 ml-1 hover:underline">Don't have the app?</a>
-            { openModal && <GoogleAuthModal closeModal={setOpenModal}/> }
+            {/* <a onClick={()=> setOpenModal(!openModal) } className="text-blue-500 pl-4 pt-4 ml-1 hover:underline">Don't have the app?</a>
+            { openModal && <GoogleAuthModal closeModal={setOpenModal}/> } */}
             <p className='pl-4 pt-4 ml-1 mt-5'>Enter your code here</p>
             <input type="number" onChange={(e)=>{setToken2FA(e.target.value)}} placeholder='Numerical Code' className="block w-[350px] rounded-md border-0 py-2 pl-2 ml-4 text-gray-900 shadow-sm ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
-            {error && error ? <p className='pl-5 pt-1x text-sm text-red-500'><MaterialSymbol icon="" size={15}/>Invalid Token</p> : null}
+            {error && error ? <p className='pl-5 pt-1x text-sm text-red-500'><MaterialSymbol icon="" size={15}/>Invalid code!</p> : null}
             <div className='items-end ml-[400px] mt-4'>
               <button type="submit" onClick={handleSubmit} className="flex w-[200px] justify-center rounded-md bg-blue-700 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Continue</button>
             </div>

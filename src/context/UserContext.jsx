@@ -16,43 +16,6 @@ export const UserProvider = ({ children }) => {
     }
   });
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem("token");
-  //   if (token) {
-  //     axios
-  //       .get("/api/auth/me", {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       })
-  //       .then((response) => {
-  //         console.log(response.data);
-  //         setCurrentUser(response.data.user);
-  //         setIsLoggedIn(true);
-  //       })
-  //       .catch(() => {
-  //         logout();
-  //       });
-  //   }
-  // }, []);
-
-  // use access_token to get data
-  // const login = useGoogleLogin({
-  //   onSuccess: async (response) => {
-  //     try {
-  //       const res = await axios.get(
-  //         "https://www.googleapis.com/oauth2/v3/userinfo",
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${response.access_token}`,
-  //           },
-  //         }
-  //       );
-  //       console.log(res);
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   },
-  // });
-
   const login = (user, token) => {
     localStorage.setItem("token", token);
     localStorage.setItem("currentUser", JSON.stringify(user));
@@ -67,6 +30,25 @@ export const UserProvider = ({ children }) => {
     setIsLoggedIn(false);
   };
 
+  const updateUserProfilePic = (newProfilePicUrl, newProfilePicType) => {
+    const updatedUser = {
+      ...currentUser,
+      profile_pic: newProfilePicUrl,
+      profile_pic_type: newProfilePicType
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+  };
+
+  const updateUserField = (field, value) => {
+    const updatedUser = {
+      ...currentUser,
+      [field]: value
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -75,6 +57,8 @@ export const UserProvider = ({ children }) => {
         login,
         logout,
         setCurrentUser,
+        updateUserProfilePic,
+        updateUserField
       }}
     >
       {children}

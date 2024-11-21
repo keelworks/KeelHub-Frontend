@@ -1,5 +1,10 @@
-
-import React, { createContext, useContext, useMemo, useId, forwardRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useId,
+  forwardRef,
+} from "react";
 import * as RechartsPrimitive from "recharts";
 import { cn } from "../utils/cn";
 
@@ -17,29 +22,31 @@ function useChart() {
   return context;
 }
 
-const ChartContainer = forwardRef(({ id, className, children, config, ...props }, ref) => {
-  const uniqueId = useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+const ChartContainer = forwardRef(
+  ({ id, className, children, config, ...props }, ref) => {
+    const uniqueId = useId();
+    const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
 
-  return (
-    <ChartContext.Provider value={{ config }}>
-      <div
-        data-chart={chartId}
-        ref={ref}
-        className={cn(
-          "flex overflow-x-auto aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
-          className
-        )}
-        {...props}
-      >
-        <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
-      </div>
-    </ChartContext.Provider>
-  );
-});
+    return (
+      <ChartContext.Provider value={{ config }}>
+        <div
+          data-chart={chartId}
+          ref={ref}
+          className={cn(
+            "flex overflow-x-auto aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
+            className
+          )}
+          {...props}
+        >
+          <ChartStyle id={chartId} config={config} />
+          <RechartsPrimitive.ResponsiveContainer>
+            {children}
+          </RechartsPrimitive.ResponsiveContainer>
+        </div>
+      </ChartContext.Provider>
+    );
+  }
+);
 ChartContainer.displayName = "Chart";
 
 const ChartStyle = ({ id, config }) => {
@@ -53,24 +60,7 @@ const ChartStyle = ({ id, config }) => {
 
   return (
     <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-                .map(([key, itemConfig]) => {
-                  const color =
-                    itemConfig.theme?.[theme] ||
-                    itemConfig.color;
-                  return color ? `  --color-${key}: ${color};` : null;
-                })
-                .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
+      dangerouslySetInnerHTML = {{__html: Object.entries(THEMES).map(([theme, prefix]) => `${prefix} [data-chart=${id}] {${colorConfig.map(([key, itemConfig]) => {const color = itemConfig.theme?.[theme] || itemConfig.color; return color ? `  --color-${key}: ${color};` : null;}).join("\n")}}`).join("\n"),}}
     />
   );
 };
@@ -279,17 +269,14 @@ function getPayloadConfigFromPayload(config, payload, key) {
 
   const payloadPayload =
     "payload" in payload &&
-      typeof payload.payload === "object" &&
-      payload.payload !== null
+    typeof payload.payload === "object" &&
+    payload.payload !== null
       ? payload.payload
       : undefined;
 
   let configLabelKey = key;
 
-  if (
-    key in payload &&
-    typeof payload[key] === "string"
-  ) {
+  if (key in payload && typeof payload[key] === "string") {
     configLabelKey = payload[key];
   } else if (
     payloadPayload &&
@@ -299,9 +286,7 @@ function getPayloadConfigFromPayload(config, payload, key) {
     configLabelKey = payloadPayload[key];
   }
 
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key];
+  return configLabelKey in config ? config[configLabelKey] : config[key];
 }
 
 export {

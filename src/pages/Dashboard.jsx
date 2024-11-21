@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useMemo } from "react";
+import React, { useContext, useEffect, useState, useMemo, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -8,6 +8,7 @@ import { UserContext } from "../context/UserContext";
 import { fetchVolunteers } from "../utils/fetchVolunteers"
 import { FaTrashAlt } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
+import { TbDeviceTabletCheck } from "react-icons/tb";
 import UpdateStatusModal from "../components/UpdateStatusModal";
 import DeleteConfirmationModal from "../components/DeleteVolunteerStatusModal";
 import AddVolunteerModalStep1 from "../components/addVolunteer/AddVolunteerStep1"
@@ -32,6 +33,14 @@ const Dashboard = () => {
   const [isStep2Open, setIsStep2Open] = useState(false);
   const [volunteerInfo, setVolunteerInfo] = useState({});
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
+  const [second, setSecond] = useState(false);
+  const [first, setFirst] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const menuRef = useRef(null);
+  const [sortOrder, setSortOrder] = useState(null);
+  const [sortOrderDate, setSortOrderDate] = useState(null);
 
   const handleAccessLevel = (role) => {
     if (role === "HR") return "2";
@@ -77,6 +86,11 @@ const Dashboard = () => {
     /// add volunteer here
   };
 
+  const handleAccept = async (volunteer) => {
+    setSelectedVolunteer(volunteer.id)
+    await handleAcceptStatus();
+  }
+
   const handleUpdate = (volunteer) => {
     setSelectedVolunteer(volunteer.id); // Store the selected volunteer in state
     setIsUpdateModalOpen(true);
@@ -107,6 +121,18 @@ const Dashboard = () => {
     setSelectedVolunteer(null);
   };
 
+  const handleAcceptStatus = async () => {
+    const task_to_accept = currentVolunteers.find(volunteer => volunteer.id === selectedVolunteer).currentTask.taskId
+    try{
+      await approveTask(task_to_accept);
+    } catch (e) {
+      console.log(`error: ${e}`)
+    }
+    setActiveRow(-1);
+    filteredVolunteers.filter(volunteer => volunteer.id !== selectedVolunteer);
+    setSelectedVolunteer(null);
+  }
+
   const handleDeleteStatus = async () => {
     const task_to_delete = currentVolunteers.find(volunteer => volunteer.id === selectedVolunteer).currentTask.taskId
     try {
@@ -122,27 +148,26 @@ const Dashboard = () => {
     setSelectedVolunteer(null);
   };
 
-
-  const [second, setSecond] = useState(false);
-  const [first, setFirst] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   useEffect(() => {
     if (currentUser && currentUser.hasLoggedIn && showToast) {
       toast.info("You have 3 unread notifications!", {
+        // This is where I giving custom position to the toast
+        position: "top-right",
+        style: { top: '80px', right: '10px'},
         onClose: () => setShowToast(false)
       });
     }
     const loadVolunteers = async () => {
       try {
-        const data = await fetchVolunteers(currentUser.id, currentUser.role);
+        const data = await fetchVolunteers(currentUser.id, currentUser.role, true);
+        console.log('Getting data here')
         console.log(data)
         setVolunteers(data);
         setFilteredVolunteers(data);
 
       } catch (error) {
         console.error('Error loading volunteers:', error);
+        setErrorMessage('Please try again later');
       }
     };
 
@@ -158,12 +183,25 @@ const Dashboard = () => {
     setProfilePicture(imageUrl);
   }, [currentUser]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setActiveRow(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuRef]);
+
   if (!currentUser) {
     return <Navigate to="/" />;
   }
   const currentVolunteers = useMemo(() => {
     if (selectedColumn === 0) {
-      return filteredVolunteers?.filter((data) => data.currentTask && data.currentTask.status === "Pending Approval");
+      return filteredVolunteers?.filter((data) => data.currentTask && data.currentTask.status === "Pending Review");
     } else {
       return filteredVolunteers?.filter((data) => data.currentTask && data.currentTask.status === "Past Due");
     }
@@ -173,7 +211,8 @@ const Dashboard = () => {
   const returnFilteredDate = (date) => {
     const day = (date.getUTCDate()).toString().padStart(2, '0');
     const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); // getUTCMonth is zero-based
-    const formattedDate = `${month}/${day}`;
+    const year = date.getUTCFullYear().toString();
+    const formattedDate = `${month}/${day}/${year}`;
     return formattedDate;
   }
   const taskProgressString = (data) => {
@@ -192,7 +231,7 @@ const Dashboard = () => {
       const updatedAt = new Date(data.currentTask.updatedAt);
       const timeDifference = dueDate.getTime() - updatedAt.getTime();
       const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
-      const formattedUpdatedAt = `${(updatedAt.getMonth() + 1).toString().padStart(2, '0')}/${updatedAt.getDate().toString().padStart(2, '0')}`;
+      const formattedUpdatedAt = `${(updatedAt.getMonth() + 1).toString().padStart(2, '0')}/${updatedAt.getDate().toString().padStart(2, '0')}/${updatedAt.getFullYear().toString().slice(-2)}`;
       let action;
       if (daysDifference < 0) {
         // If the task is overdue
@@ -210,8 +249,31 @@ const Dashboard = () => {
 
   }
 
+  const sortByFirstName = () => {
+    let sortedVolunteers;
+    if (sortOrder === 'asc') {
+      sortedVolunteers = [...filteredVolunteers].sort((a, b) => a.firstName.localeCompare(b.firstName));
+      setSortOrder('desc');
+    } else {
+      sortedVolunteers = [...filteredVolunteers].sort((a, b) => b.firstName.localeCompare(a.firstName));
+      setSortOrder('asc');
+    }
+    setFilteredVolunteers(sortedVolunteers);
+  };
+  const sortByStatusChangeDate = (order) => {
+    let sortedVolunteers;
+    if (order === 'latest') {
+      sortedVolunteers = [...filteredVolunteers].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      setSortOrderDate('latest');
+    } else {
+      sortedVolunteers = [...filteredVolunteers].sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+      setSortOrderDate('earliest');
+    }
+    setFilteredVolunteers(sortedVolunteers);
+  };
+
   return (
-    <div className="flex flex-col  ">
+    <div className="flex flex-col -mt-6">
       <div className="flex flex-col p-4 gap-4 ">
         <h1 className="text-3xl font-sans text-gray-900">Hello, {currentUser.first_name || 'User'}!</h1>
         <div className="flex text-gray-400">Your volunteer activities at a glance</div>
@@ -223,7 +285,7 @@ const Dashboard = () => {
               setActiveRow(-1);
               setSelectedColumn(0)
             }}>
-              Pending Reviews
+              Pending Review
             </button>
             <button className={`flex w-48 justify-start items-center border-b-2 ${selectedColumn === 1 && "border-blue-600 text-blue-600"}`} onClick={() => {
               setSelectedColumn(1)
@@ -259,17 +321,21 @@ const Dashboard = () => {
         </div>
 
       </div>
-      <div className="flex px-4 h-[250px] overflow-y-scroll text-sm">
+      <div className="flex px-4 h-[230px] overflow-y-auto text-sm">
         <table className="flex flex-col flex-1">
           <thead className="flex max-h-12">
             <tr className="flex flex-1 bg-gray-100 border-b border-gray-200 justify-between">
               <th className="flex p-3 min-w-56 font-semibold text-gray-600 flex-1 text-center  items-center hover:text-gray-900 gap-3 ">
                 Name
-                <div className="flex flex-col p-2 gap-2" >
-                  <button>
+                <div className="flex flex-col p-2 gap-1" >
+                  <button
+                    onClick={() => sortByFirstName('asc')}
+                  >
                     <span className="flex  flex-col justify-start max-h-4 ">⏶</span>
                   </button>
-                  <button>
+                  <button
+                    onClick={() => sortByFirstName('desc')}
+                  >
                     <span className="flex  flex-col   justify-end max-h-3 ">⏷</span>
                   </button>
                 </div>
@@ -282,11 +348,15 @@ const Dashboard = () => {
               </th>
               <th className="flex p-3 font-semibold text-gray-600 flex-1 text-center min-w-56 items-center hover:text-gray-900 gap-3 ">
                 {selectedColumn === 1 ? "Due Date" : "Status Change Date"}
-                <div className="flex flex-col p-2 gap-2" >
-                  <button>
+                <div className="flex flex-col p-2 gap-1" >
+                  <button
+                    onClick={() => sortByStatusChangeDate('earliest')}
+                  >
                     <span className="flex  flex-col justify-start max-h-4 ">⏶</span>
                   </button>
-                  <button>
+                  <button
+                    onClick={() => sortByStatusChangeDate('latest')}
+                  >
                     <span className="flex  flex-col   justify-end max-h-3 ">⏷</span>
                   </button>
                 </div>
@@ -295,14 +365,14 @@ const Dashboard = () => {
                 Task
 
               </th>
-              <th className="flex p-3 font-semibold text-gray-600 flex-1 text-center  items-center hover:text-gray-900 gap-0  min-w-44">
+              <th className="flex p-3 font-semibold text-gray-600 flex-1 text-center items-center hover:text-gray-900 gap-3  min-w-28">
                 Date Created
-                <div className="flex flex-col p-2 gap-2" >
+                <div className="flex flex-col p-2 gap-1" >
                   <button>
-                    <span className="flex  flex-col justify-start max-h-4 ">⏶</span>
+                    <span className="flex flex-col justify-start max-h-4 ">⏶</span>
                   </button>
                   <button>
-                    <span className="flex  flex-col   justify-end max-h-3 ">⏷</span>
+                    <span className="flex flex-col justify-end max-h-3 ">⏷</span>
                   </button>
                 </div>
               </th>
@@ -310,20 +380,27 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody className="flex flex-1 flex-col overflow-scroll">
-            {filteredVolunteers?.length === 0 && <div className="flex flex-1 justify-center items-center">
-              {selectedColumn === 0 && filteredVolunteers?.length === 0 && "No pending review tasks to show at the moment"}
-              {selectedColumn === 1 && filteredVolunteers?.length === 0 && "No past due tasks to show at the moment"}
-            </div>
+            {filteredVolunteers?.length === 0 && 
+              <div className="flex flex-1 justify-center items-center">
+                {errorMessage ? (
+                  <div className="error-message text-xl">{errorMessage}</div>
+                ) : (
+                  <>
+                    {selectedColumn === 0 && filteredVolunteers?.length === 0 && "No pending review tasks at the moment"}
+                    {selectedColumn === 1 && filteredVolunteers?.length === 0 && "No past due tasks to show at the moment"}
+                  </>
+                )}
+              </div>
             }
             {currentVolunteers?.map((volunteer, index) => (
-              <tr key={volunteer.id} className="flex flex-1 border-b  justify-around" style={{
-                minHeight: "80px"
+              <tr key={volunteer.id} className="flex flex-1 p-3 border-b  justify-around" style={{
+                minHeight: "60px"
               }}>
-                <td className="flex p-3 flex-1 items-center min-w-56 ">
+                <td className="flex flex-1 items-center min-w-56 ">
                   <div className="flex gap-2">
                     <img
                       className="h-8 w-8 rounded-full object-cover"
-                      src={volunteer.profilePic}
+                      src={volunteer.profilePic || 'src/assets/defaultProfile.png'}
                       alt={volunteer.firstName}
                     />
                     <div className="flex flex-col  ">
@@ -334,8 +411,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </td>
-                <td className="flex p-3 flex-1 items-center min-w-44 ">
-                  {volunteer.currentTask.status === "Pending Approval" ?
+                <td className="flex flex-1 items-center min-w-44">
+                  {volunteer.currentTask.status === "Pending Review" ?
                     <span className=" bg-[#FFDDB5] text-[#FF8A00] rounded-md  border-[#FF8A00] px-2 py-1 bg-opacity-55" style={{
                       borderWidth: "1px",
                     }}>{volunteer.currentTask.status}</span>
@@ -345,17 +422,17 @@ const Dashboard = () => {
                     }}>{volunteer.currentTask.status}</span>
                   }
                 </td>
-                <td className="flex p-3 flex-1 items-center min-w-56 ">{
+                <td className="flex flex-1 items-center min-w-56 ">{
                   selectedColumn === 1 ?
                     returnStatusChangeDate(volunteer) :
                     returnStatusChangeDate(volunteer)
                 }</td>
-                <td className="flex p-3 flex-1 items-center gap-4 min-w-64 ">
-                  <span className="bg-gray-100 rounded-sm p-1 ">{taskProgressString(volunteer)}</span>
-                  {volunteer.currentTask.taskName}
+                <td className="flex flex-1 items-center gap-2 min-w-64 ">
+                  <span className="bg-gray-100 rounded-sm p-1">{taskProgressString(volunteer)}</span>
+                  <span className="text-sm">{volunteer.currentTask.task_name}</span>
                 </td>
-                <td className="flex p-3 flex-1 items-center max-w-52 ">{returnFilteredDate(new Date(volunteer.createdAt))}</td>
-                <td className="flex p-3 justify-center flex-1 items-center max-w-40" >
+                <td className="flex flex-1 pl-4 items-center max-w-52">{returnFilteredDate(new Date(volunteer.createdAt))}</td>
+                <td className="flex justify-center flex-1 items-center max-w-40 relative" >
                   {activeRow !== index ? (<button
                     onClick={() => {
                       setActiveRow(index);
@@ -366,13 +443,21 @@ const Dashboard = () => {
                     ...
                   </button>
                   ) : (
-                    <span className=" flex flex-col min-w-40 items-center justify-center  bg-white shadow-md rounded-md z-100">
+                    <span ref={menuRef} className="z-50 mt-16 flex flex-col min-w-40 items-center justify-center align-center bg-white shadow-md rounded-md">
+                      <span className="flex gap-2 p-2  hover:bg-gray-100 w-full items-center border-b border-gray-200">
+                        <TbDeviceTabletCheck />
+                        <button
+                          onClick={() => handleAccept(volunteer)}
+                        >
+                          Accept
+                        </button>
+                      </span>
                       <span className="flex gap-2 p-2  hover:bg-gray-100 w-full items-center border-b border-gray-200">
                         <MdOutlineEdit />
                         <button
                           onClick={() => handleUpdate(volunteer)}
                         >
-                          Update Status
+                          Request Revision
                         </button>
                       </span>
                       <span className="flex gap-2 p-2  hover:bg-gray-100 w-full items-center text-red-500 ">
@@ -390,9 +475,8 @@ const Dashboard = () => {
             ))}
           </tbody>
         </table>
-
       </div>
-      <div className="flex flex-1 pl-4 pt-4">
+      <div className="flex flex-1 pl-4 pt-4 pb-4 overflow-x-auto">
         <BarChartDashboard />
       </div>
       <UpdateStatusModal

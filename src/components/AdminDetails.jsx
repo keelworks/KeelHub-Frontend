@@ -7,6 +7,9 @@ import 'react-phone-input-2/lib/style.css'
 import { useNavigate } from "react-router-dom";
 import { getTimezonesForCountry } from "countries-and-timezones"
 import moment from "moment-timezone";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import {phone} from 'phone';
 
 const useAuthToken = () => {
   const [authToken, setAuthToken] = useState('');
@@ -59,20 +62,22 @@ const AdminDetails = () => {
         country: '',
         state: '',
         timezone: '',
-        visaType: '',
-        phone: ''
+        visa_extension: '',
+        phone: '',
+        keelworks_start_date: '',
+        agreed_hours_per_week: ''
     });
     const [timezoneList, setTimezoneList] = useState([]);
     const [compulsory, setCompulsory] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
 
-    const USA_Visa_List = ["F1", "O1", "H1B", "L1", "N/A"];
+    const USA_Visa_List = ["OPT", "CPT", "N/A"];
 
     const fetchCountries = useCallback(async () => {
         if (!authToken || countryList.length > 0) return;
         setIsLoading(true);
-        console.log(authToken);
         try {
             const response = await axios.get('/api/api/countries/', {
                 headers: {
@@ -122,14 +127,45 @@ const AdminDetails = () => {
     }, [authToken, fetchAuthToken]);
 
     const handleInputChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => {
+            const newData = { ...prev, [field]: value };
+            console.log("New form data:", newData);
+            return newData;
+        });
         if (field === 'country') {
             fetchStates(value);
         }
+        setErrors(prev => ({ ...prev, [field]: '' }));
+        setCompulsory(false);
+    };
+
+    // handler for date change
+    const handleDateChange = (date) => {
+        if (date){
+            let date_string = JSON.stringify(date).slice(1,11)
+            handleInputChange('keelworks_start_date', date_string);
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        Object.entries(formData).forEach(([key, value]) => {
+            if (!value || value.trim() === '') {
+                newErrors[key] = 'This field is required';
+            }
+        });
+
+        let {isValid} = phone(`+${formData.phone}`,{country:null})
+        
+        if(!isValid){
+            newErrors['phone'] = "Enter a valid phone number"
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async () => {
-        if (Object.values(formData).some(value => value === '')) {
+        if (!validateForm()) {
             setCompulsory(true);
             return;
         }
@@ -137,8 +173,10 @@ const AdminDetails = () => {
         try {
             const userData = {
                 ...formData,
+                visa_type: formData.visa_extension,
                 hasLoggedIn: true,
             };
+            console.log("userData",userData)
             await axios.put(`http://localhost:3001/api/users/${currentUser.id}`, userData, {
                 headers: {
                     'Authorization': authToken,
@@ -172,10 +210,6 @@ const AdminDetails = () => {
         }
     }, [formData.country, currentUser, navigate, updateTimezones, fetchStates]);
 
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
-
     return (
         <div className="flex flex-col md:flex-row mx-auto">
             {/* First Division */}
@@ -190,15 +224,15 @@ const AdminDetails = () => {
       
             {/* Second Division */}
             <div className="bg-gray-100 w-full md:w-3/5 h-screen flex flex-col items-start justify-start">
-                <div className="w-full max-w-screen-sm pr-4 md:pr-15 mt-4 md:mt-[20px] pl-4 md:pl-10 ml-4 md:ml-[60px] mb-auto">
-                    <h3 className="text-black pl-2 pt-2 md:pl-4 md:pt-4 text-3xl md:text-5xl">Hey there {currentUser?.first_name}</h3>
+                <div className="w-full max-w-screen-sm pr-4 md:pr-15 mt-4 md:mt-[10px] pl-4 md:pl-10 ml-4 md:ml-[60px] mb-auto">
+                    <h3 className="text-black pl-2 pt-2 md:pl-4 md:pt-4 text-3xl md:text-5xl">Hey there {currentUser?.first_name}!</h3>
                     <h2 className="pl-2 md:pl-5 pt-2 md:pt-3 text-gray-600 text-lg md:text-xl">Complete your information to get started</h2>
       
                     <div className="flex items-center gap-x-4 md:gap-x-6 rounded mt-4 md:mt-[15px] ml-2 md:ml-5 bg-slate-200">
                         <img className="h-12 w-12 md:h-16 md:w-16 ml-2 rounded-full p-1" src={currentUser && currentUser.profile_pic} alt="Profile" />
                         <div>
-                            <h3 className="text-base font-semibold leading-7 tracking-tight text-gray-900">{currentUser && currentUser.first_name} {currentUser && currentUser.last_name}</h3>
-                            <p className="text-sm font-semibold leading-6 text-gray-500">{currentUser && currentUser.role}</p>
+                            <h3 className="text-lg font-semibold leading-7 tracking-tight text-gray-900">{currentUser && currentUser.first_name} {currentUser && currentUser.last_name} - {currentUser && currentUser.role}</h3>
+                            <p className="text-sm font-thin leading-6 text-gray-500">{currentUser && currentUser.username}</p>
                         </div>
                     </div>
       
@@ -206,7 +240,7 @@ const AdminDetails = () => {
                     <div className="grid grid-cols-1 gap-x-4 gap-y-4 md:gap-x-8 md:gap-y-6 ml-2 md:ml-5 sm:grid-cols-2 mt-4 md:mt-3">
                         <div>
                             <label className="block text-sm font-semibold leading-1 text-gray-900">Country of Residence *</label>
-                            <div className="mt-2">
+                            <div className="mt-1">
                                 <select
                                     onChange={(e) => handleInputChange('country', e.target.value)}
                                     value={formData.country}
@@ -220,10 +254,11 @@ const AdminDetails = () => {
                                     ))}
                                 </select>
                             </div>
+                            {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-semibold leading-1 text-gray-900">State/Province *</label>
-                            <div className="mt-2">
+                            <div className="mt-1">
                                 <select
                                     onChange={(e) => handleInputChange('state', e.target.value)}
                                     value={formData.state}
@@ -237,10 +272,11 @@ const AdminDetails = () => {
                                     ))}
                                 </select>
                             </div>
+                            {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
                         </div>
                         <div className="sm:col-span-2">
                             <label className="block text-sm font-semibold leading-1 text-gray-900">Timezone *</label>
-                            <div className="mt-2">
+                            <div className="mt-1">
                                 <select
                                     onChange={(e) => handleInputChange('timezone', e.target.value)}
                                     value={formData.timezone}
@@ -254,13 +290,16 @@ const AdminDetails = () => {
                                     ))}
                                 </select>
                             </div>
+                            {errors.timezone && <p className="text-red-500 text-xs mt-1">{errors.timezone}</p>}
                         </div>
                         <div className="sm:col-span-2">
-                            <label className="block text-sm font-semibold leading-1 text-gray-900">USA Visa Type *</label>
-                            <div className="mt-2">
+                            <label htmlFor="visa_extension" className="block text-sm font-semibold leading-1 text-gray-900">Visa Extension *</label>
+                            <div className="mt-1">
                                 <select
-                                    onChange={(e) => handleInputChange('visaType', e.target.value)}
-                                    value={formData.visaType}
+                                    id="visa_extension"
+                                    name="visa_extension"
+                                    onChange={(e) => handleInputChange('visa_extension', e.target.value)}
+                                    value={formData.visa_extension || ''}
                                     className="block w-full rounded-md border-0 px-3.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                 >
                                     <option value="">Select..</option>
@@ -271,6 +310,7 @@ const AdminDetails = () => {
                                     ))}
                                 </select>
                             </div>
+                        {errors.visa_extension && <p className="text-red-500 text-xs mt-1">{errors.visa_extension}</p>}
                         </div>
                         <div className="sm:col-span-2">
                             <label className="block text-sm font-semibold leading-1 text-gray-900">Phone number *</label>
@@ -281,7 +321,39 @@ const AdminDetails = () => {
                                     onChange={(value) => handleInputChange('phone', value)}
                                 />
                             </div>
+                            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                         </div>
+
+                        {/* Keelworks Start Date Field */}
+                <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold leading-1 text-gray-900">Keelworks Start Date *</label>
+                    <div className="relative mt-1">
+                        <DatePicker
+                            selected={formData.keelworks_start_date}
+                            onChange={handleDateChange}
+                            dateFormat="yyyy-MM-dd"
+                            placeholderText="Select a date"
+                            className="block w-full rounded-md border-0 px-3.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                    {errors.keelworks_start_date && <p className="text-red-500 text-xs mt-1">{errors.keelworks_start_date}</p>}
+                </div>
+
+                        {/* Agreed Hours per Week Field */}
+                <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold leading-1 text-gray-900">Agreed Hours per Week *</label>
+                    <div className="mt-1">
+                        <input
+                            type="number"
+                            min="1" max="100" step="1"
+                            placeholder="Enter hours"
+                            value={formData.agreed_hours_per_week}
+                            onChange={(e) => handleInputChange('agreed_hours_per_week', e.target.value)}
+                            className="block w-full rounded-md border-0 px-3.5 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                    {errors.agreed_hours_per_week && <p className="text-red-500 text-xs mt-1">{errors.agreed_hours_per_week}</p>}
+                </div>  
                     </div>
                     {/* Form End */}
       
@@ -292,10 +364,10 @@ const AdminDetails = () => {
                             className="flex w-[200px] justify-center rounded-md bg-blue-700 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Processing...' : 'Continue'}
+                            {isLoading ? 'Processing...' : 'Complete'}
                         </button>
                     </div>
-                    {compulsory && <p className="text-red-600">All fields are required!</p>}
+                    {/* {compulsory && <p className="text-red-600">All fields are required!</p>} */}
                 </div>
             </div>
         </div>

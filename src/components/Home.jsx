@@ -21,7 +21,7 @@ const Home = () => {
       const response = await axios.post("http://localhost:3001/api/auth/google-login", credentialResponseDecoded);
 
       const {token, user } = response.data;
-      console.log(response.data)
+      
       await login(user, token);
 
       navigate(user && user.secret_2fa ? "/2fa" : '2fa-setup', {replace:true})
