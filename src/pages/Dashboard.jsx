@@ -201,7 +201,7 @@ const Dashboard = () => {
   }
   const currentVolunteers = useMemo(() => {
     if (selectedColumn === 0) {
-      return filteredVolunteers?.filter((data) => data.currentTask && data.currentTask.status === "Pending Review");
+      return filteredVolunteers?.filter((data) => data.currentTask && data.currentTask.status === "Pending Approval");
     } else {
       return filteredVolunteers?.filter((data) => data.currentTask && data.currentTask.status === "Past Due");
     }
