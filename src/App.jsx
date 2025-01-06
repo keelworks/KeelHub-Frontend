@@ -117,7 +117,7 @@ function App() {
           path="/onboarding/workflow"
           element={
             isLoggedIn ? (
-              <Layout>
+              <Layout title={"Onboarding Workflow"}>
                 <OnboardingTaskDisplay />
               </Layout>
             ) : (
@@ -129,7 +129,7 @@ function App() {
           path="/onboarding/tasks"
           element={
             isLoggedIn ? (
-              <Layout>
+              <Layout title={"Onboarding Tasks"}>
                 {/* <VolunteerListPage /> */}
                 <OnboardingTasksAdmin/>
               </Layout>

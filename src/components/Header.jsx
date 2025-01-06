@@ -5,12 +5,11 @@ import { TbGridDots } from "react-icons/tb";
 import { UserContext } from "../context/UserContext";
 import defaultUser from "../assets/defaultUser.jpg";
 
-function Header() {
+function Header({title}) {
   const navigate = useNavigate();
   const { isLoggedIn, currentUser, logout } = useContext(UserContext);
   const [notificationCount, setNotificationCount] = useState(4);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const getProfilePicSrc = () => {
     if (!currentUser?.profile_pic) return defaultUser;
     return currentUser.profile_pic_type === 'google' ? currentUser.profile_pic : `http://localhost:3001${currentUser.profile_pic}`;
@@ -38,7 +37,7 @@ function Header() {
 
   return (
     <header className="flex justify-between items-center min-w-full bg-white border-b">
-      <div className="p-4">Volunteers</div>
+      <div className="p-4">{title? title:null}</div>
       <div className="flex gap-4 p-4 items-center">
         <div className="flex gap-4">
           <button
