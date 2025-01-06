@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Table, Dropdown, Menu, message } from "antd";
 import { HiOutlineTemplate } from "react-icons/hi";
 import ExtendDueDateModal from "./ExtendDueDateModal";
+import AssignVolunteerTask from "./AssignVolunteerTask";
 import axios from "axios";
 
 const AdminVolunteerList = () => {
@@ -15,10 +16,22 @@ const AdminVolunteerList = () => {
     pageSizeOptions: ["10", "20", "50", "100"],
   });
   const [tasks, setTasks] = useState([]);
-  const [isExtendDueDateModalOpen, setIsExtendDueDateModalOpen] = useState(false);
+  const [isExtendDueDateModalOpen, setIsExtendDueDateModalOpen] =
+    useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  const defaultFilter = {
+    Task: "",
+    Status: "",
+  };
+  const [filter, setFilter] = useState(defaultFilter);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
   const fetchVolunteers = useCallback(
     async (params = { current: 1, pageSize: 10 }) => {
@@ -55,6 +68,11 @@ const AdminVolunteerList = () => {
     fetchVolunteers(pagination);
   }, [fetchVolunteers]);
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilter({ ...filter, [name]: value });
+  };
+
   const handleTableChange = (newPagination, filters, sorter) => {
     fetchVolunteers({
       current: newPagination.current,
@@ -76,22 +94,27 @@ const AdminVolunteerList = () => {
   const handleEditTaskSubmit = async (updatedTask) => {
     try {
       if (updatedTask.extendDueDate > 0) {
-      const taskDetailsResponse = await axios.get(`http://localhost:3001/api/volunteer-tasks/${selectedTask.taskId}`);      
-      const { volunteer_id } = taskDetailsResponse.data;
-      const response = await axios.put(`http://localhost:3001/api/volunteer-tasks/volunteers/${volunteer_id}/extend-due-date`, {
-          extendDays: updatedTask.extendDueDate,
-      });
+        const taskDetailsResponse = await axios.get(
+          `http://localhost:3001/api/volunteer-tasks/${selectedTask.taskId}`
+        );
+        const { volunteer_id } = taskDetailsResponse.data;
+        const response = await axios.put(
+          `http://localhost:3001/api/volunteer-tasks/volunteers/${volunteer_id}/extend-due-date`,
+          {
+            extendDays: updatedTask.extendDueDate,
+          }
+        );
 
-      if (response.status === 200) {
-          message.success('Task edited successfully');
-          fetchVolunteers(pagination); 
+        if (response.status === 200) {
+          message.success("Task edited successfully");
+          fetchVolunteers(pagination);
           setIsExtendDueDateModalOpen(false);
           setIsEditMode(false);
+        }
       }
-    }
     } catch (error) {
-        console.error('Error extending due date:', error);
-        message.error('Failed to extend due date');
+      console.error("Error extending due date:", error);
+      message.error("Failed to extend due date");
     }
   };
 
@@ -169,8 +192,10 @@ const AdminVolunteerList = () => {
       title: "Actions",
       key: "actions",
       render: (text, record) => {
-        const isEditable = record.currentTask && record.currentTask.task_name !== 'All onboarding tasks completed';
-        
+        const isEditable =
+          record.currentTask &&
+          record.currentTask.task_name !== "All onboarding tasks completed";
+
         const menuItems = [
           {
             key: "1",
@@ -188,7 +213,7 @@ const AdminVolunteerList = () => {
           //   onClick: () => handleExtendDueDate(record.id),
           // }
         ];
-        
+
         if (isEditable) {
           menuItems.push({
             key: "3",
@@ -196,7 +221,7 @@ const AdminVolunteerList = () => {
             onClick: () => handleEditClick(record.currentTask),
           });
         }
-  
+
         return (
           <Dropdown menu={{ items: menuItems }}>
             <a onClick={(e) => e.preventDefault()}>Actions</a>
@@ -229,20 +254,21 @@ const AdminVolunteerList = () => {
       message.error("Failed to approve task");
     }
   };
-  
+
   const handleReject = async (id) => {
-      try {
-          const response = await axios.put(`http://localhost:3001/api/volunteer-tasks/volunteers/${id}/reject-task`);
-          if (response.status === 200) {
-              message.success('Task Rejected');
-          }
+    try {
+      const response = await axios.put(
+        `http://localhost:3001/api/volunteer-tasks/volunteers/${id}/reject-task`
+      );
+      if (response.status === 200) {
+        message.success("Task Rejected");
       }
-      catch (error) {
-          console.error('Error rejecting task:', error);
-          message.error('Failed to reject task');
-      }
+    } catch (error) {
+      console.error("Error rejecting task:", error);
+      message.error("Failed to reject task");
+    }
   };
-  
+
   // const handleExtendDueDate = async (id) => {
   //     try {
   //       console.log("id", id)
@@ -260,6 +286,53 @@ const AdminVolunteerList = () => {
   return (
     <div>
       <h2>Admin Volunteer Onboarding Tracker</h2>
+      <br></br>
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-700">Filter by:</span>
+            <select
+              name="Task"
+              value={filter.Task}
+              onChange={handleFilterChange}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="All">Task 1</option>
+              <option value={true}>Task 1</option>
+              <option value={false}>Task 2</option>
+            </select>
+            <select
+              name="status"
+              value={filter.Status}
+              onChange={handleFilterChange}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Status</option>
+              <option value="pending">Pending</option>
+              <option value="in progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="unassigned">Unassigned</option>
+              <option value="assigned">Assigned</option>
+            </select>
+            <button
+              onClick={() => {
+                setFilter(defaultFilter);
+              }}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Clear Filter
+            </button>
+          </div>
+          <div className="flex space-x-4">
+            <button
+              onClick={openModal}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              + New Volunteer
+            </button>
+          </div>
+        </div>
+      </div>
       <Table
         columns={columns}
         dataSource={volunteers}
@@ -268,7 +341,7 @@ const AdminVolunteerList = () => {
         loading={loading}
         onChange={handleTableChange}
       />
-      
+
       <ExtendDueDateModal
         isOpen={isExtendDueDateModalOpen}
         closeModal={() => {
@@ -288,6 +361,8 @@ const AdminVolunteerList = () => {
         isTemplateView={true}
         onCopyTemplate={handleCopyTemplate}
       />
+
+      <AssignVolunteerTask isOpen={isModalOpen} onClose={closeModal} />
     </div>
   );
 };

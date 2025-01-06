@@ -1,5 +1,5 @@
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const addVolunteer = async (
   username,
@@ -15,7 +15,7 @@ export const addVolunteer = async (
   timezone
 ) => {
   const token = localStorage.getItem("token");
-  
+
   try {
     const userData = {
       username,
@@ -44,7 +44,7 @@ export const addVolunteer = async (
 
     // Create volunteer record
     const newVolunteer = {
-      volunteer_id: userResponse.data.data.id,
+      volunteer_id: userResponse.data.user.id,
       skills: [],
     };
 
@@ -61,7 +61,9 @@ export const addVolunteer = async (
     toast.success("Volunteer added successfully!");
     return { user: userResponse.data, volunteer: volunteerResponse.data };
   } catch (error) {
-    const errorMessage = error.response?.data?.error || "An error occurred while adding the volunteer";
+    const errorMessage =
+      error.response?.data?.error ||
+      "An error occurred while adding the volunteer";
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
