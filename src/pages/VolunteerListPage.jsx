@@ -34,7 +34,7 @@ const VolunteerListPage = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Volunteer Management</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6">Tasks</h1>
             {loading ? (
                 <p className="text-center text-lg text-gray-600">Loading...</p>
             ) : (

@@ -2,6 +2,7 @@ import React from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import img from "../../assets/defaultUser.jpg";
+import { FaInfoCircle, FaChevronDown, FaEllipsisH } from "react-icons/fa";
 
 const Volunteer = (props) => {
   const { volunteer } = props;
@@ -9,10 +10,15 @@ const Volunteer = (props) => {
   console.log(volunteer);
   const date = new Date(volunteer.created_at);
 
+  const [activeDropdown, setActiveDropdown] = useState(false);
+
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   const formattedDate = `${month}/${day}/${year}`;
+
+  const handleEditProfile = () => {};
+  const handleViewProfile = () => {};
 
   return (
     <tr className="border-b border-gray-200 hover:bg-gray-50">
@@ -32,7 +38,7 @@ const Volunteer = (props) => {
             >
               {volunteer.first_name} {volunteer.last_name}
             </Link>
-            <div className="text-sm text-gray-600">{volunteer.email}</div>
+            <div className="text-sm text-gray-600">{volunteer.username}</div>
           </div>
         </div>
       </td>
@@ -89,7 +95,30 @@ const Volunteer = (props) => {
         )} */}
       </td>
       <td className="p-3">
-        <button className="text-gray-500 hover:text-gray-700 text-xl">⋯</button>
+        <div className="relative">
+          <button
+            onClick={() => setActiveDropdown(!activeDropdown)}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          >
+            <FaEllipsisH />
+          </button>
+          {activeDropdown && (
+            <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-xl z-20 border border-gray-200">
+              <button
+                onClick={handleEditProfile}
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+              >
+                Edit Profile
+              </button>
+              <button
+                onClick={handleViewProfile}
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+              >
+                View Profile
+              </button>
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   );

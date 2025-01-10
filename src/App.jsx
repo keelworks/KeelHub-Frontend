@@ -30,6 +30,7 @@ import VerificationFail from "./components/VerificationFail";
 import AccountSuccess from "./components/AccountSuccess";
 import VolunteerHome from "./pages/VolunteerHome";
 import NotificationsPage from "./components/notifications/NotificationPage";
+import OnboardingTasksAdmin from "./components/onboarding/OnboardingTasksAdmin";
 
 
 
@@ -116,7 +117,7 @@ function App() {
           path="/onboarding/workflow"
           element={
             isLoggedIn ? (
-              <Layout>
+              <Layout title={"Onboarding Workflow"}>
                 <OnboardingTaskDisplay />
               </Layout>
             ) : (
@@ -128,8 +129,9 @@ function App() {
           path="/onboarding/tasks"
           element={
             isLoggedIn ? (
-              <Layout>
-                <VolunteerListPage />
+              <Layout title={"Onboarding Tasks"}>
+                {/* <VolunteerListPage /> */}
+                <OnboardingTasksAdmin/>
               </Layout>
             ) : (
               <Navigate to="/login" />
