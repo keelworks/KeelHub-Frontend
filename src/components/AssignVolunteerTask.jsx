@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 Modal.setAppElement("#root");
 
-const AssignVolunteerTask = ({ isOpen, onClose }) => {
+const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -197,6 +197,19 @@ const AssignVolunteerTask = ({ isOpen, onClose }) => {
         }
       );
 
+      const VolunteerBody = {
+        status: "in_progress",
+      };
+      const volunteerResponse = await axios.put(
+        `http://localhost:3001/api/volunteers/${volunteer_id}`,
+        VolunteerBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (volunteerTaskResponse.status === 201) {
         console.log("Volunteer-task created successfully.");
         toast.success(
@@ -210,6 +223,9 @@ const AssignVolunteerTask = ({ isOpen, onClose }) => {
           `Unable to add new volunteer: ${formData.name}. Please try again.`
         );
       }
+
+      //Reload the data in the table on Success
+      onSuccess();
 
       // Reset form data
       setFormData({
