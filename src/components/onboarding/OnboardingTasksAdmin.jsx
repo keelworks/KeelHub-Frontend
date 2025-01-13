@@ -6,6 +6,8 @@ import { UserContext } from "../../context/UserContext";
 import axios from "axios";
 import img from '../../assets/defaultUser.jpg'
 import { FaInfoCircle, FaChevronDown, FaEllipsisH } from "react-icons/fa";
+import AssignVolunteerTask from "../AssignVolunteerTask";
+
 
 const OnboardingTasksAdmin = () => {
 
@@ -133,7 +135,7 @@ const OnboardingTasksAdmin = () => {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+      {/* <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-4">
           <span className="text-gray-700">Filter by:</span>
           <select
@@ -159,6 +161,54 @@ const OnboardingTasksAdmin = () => {
             <option value="Website Redesign">Website Redesign</option>
             <option value="Portfolio Builder">Portfolio Builder</option>
           </select>
+        </div>
+      </div> */}
+
+<br></br>
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-700">Filter by:</span>
+            <select
+              name="Task"
+              value={filter.Task}
+              onChange={handleFilterChange}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="All">Task 1</option>
+              <option value={true}>Task 1</option>
+              <option value={false}>Task 2</option>
+            </select>
+            <select
+              name="status"
+              value={filter.Status}
+              onChange={handleFilterChange}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Status</option>
+              <option value="pending">Pending</option>
+              <option value="in progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="unassigned">Unassigned</option>
+              <option value="assigned">Assigned</option>
+            </select>
+            <button
+              onClick={() => {
+                setFilter(defaultFilter);
+              }}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Clear Filter
+            </button>
+          </div>
+          <div className="flex space-x-4">
+            <button
+              onClick={openModal}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              + New Volunteer
+            </button>
+          </div>
         </div>
       </div>
 
@@ -327,7 +377,8 @@ const OnboardingTasksAdmin = () => {
         Showing {filteredVolunteers.length} results
       </div>
 
-      <CreateAccount isOpen={isModalOpen} onClose={closeModal} />
+      {/* <CreateAccount isOpen={isModalOpen} onClose={closeModal} /> */}
+      <AssignVolunteerTask isOpen={isModalOpen} onClose={closeModal} />
     </div>
   );
 };
