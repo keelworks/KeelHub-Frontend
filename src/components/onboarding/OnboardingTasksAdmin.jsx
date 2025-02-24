@@ -52,6 +52,13 @@ const OnboardingTasksAdmin = () => {
     setFilter({ ...filter, [name]: value });
   };
 
+  // This function is responsible for fetching all the tasks from the db
+  const fetchAllTasks = async () => {
+    const response = await axios.get("http://localhost:3001/api/tasks/onboarding");
+    setTasks(response.data);
+    console.log("Tasks", response.data)
+  }
+
   // Fetching volunteers for getting their roles seperately because, the fetchAllVolunteers() isn't bring the respective role of the volunteer.
   const fetchAllVolunteersForRole = async () => {
     try {
@@ -102,27 +109,27 @@ const OnboardingTasksAdmin = () => {
   };
 
   useEffect(() => {
+    fetchAllTasks();
     fetchAllVolunteersForRole();
     fetchVolunteers();
   }, [reload]);
 
+  // This useEffect will run when filter by either status or task is applied by the user and the list of volunteers will be 
+  // updated accordingly.
   useEffect(() => {
     const filterVolunteers = () => {
       let result = [...volunteers];
-      // console.log("use effect filter.active: ", filter.Active);
-      if (filter.Active === "true" || filter.Active === "false") {
-        result = result.filter((v) => v.is_active.toString() === filter.Active);
-      }
 
-      if (filter.status) {
-        result = result.filter((v) => v.Volunteer.status === filter.status);
+      if (filter.task || filter.status){
+          if(filter.task){
+            result = result.filter((v) => v.currentTask.task_name === filter.task)
+          }
+          if(filter.status){
+            result = result.filter((v) => v.currentTask.status === filter.status)
+          }
       }
-
-      if (filter.role) {
-        result = result.filter(
-          (v) => v.Volunteer.jobTitles[0]?.title === filter.role
-        );
-      }
+      console.log(result)
+      
       setFilteredVolunteers(result);
     };
     filterVolunteers();
@@ -144,62 +151,43 @@ const OnboardingTasksAdmin = () => {
 
   return (
     <div className="p-6">
-      {/* <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-700">Filter by:</span>
-          <select
-            name="task"
-            value={filter.task}
-            onChange={handleFilterChange}
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Task</option>
-            <option value="pending">Pending</option>
-            <option value="in progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="unassigned">Unassigned</option>
-            <option value="assigned">Assigned</option>
-          </select>
-          <select
-            name="status"
-            value={filter.status}
-            onChange={handleFilterChange}
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="All">Status</option>
-            <option value="Website Redesign">Website Redesign</option>
-            <option value="Portfolio Builder">Portfolio Builder</option>
-          </select>
-        </div>
-      </div> */}
-
       <br></br>
       <div>
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
             <span className="text-gray-700">Filter by:</span>
             <select
-              name="Task"
-              value={filter.Task}
+              name="task"
+              value={filter.task}
               onChange={handleFilterChange}
-              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-28 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="All">Task 1</option>
-              <option value={true}>Task 1</option>
-              <option value={false}>Task 2</option>
+              <option value="">Task</option>
+              {
+                tasks? tasks.map((task,idx)=>(
+                   <option key={idx}>{task.task_name}</option>
+                )) : null
+              }
             </select>
             <select
               name="status"
-              value={filter.Status}
+              value={filter.status}
               onChange={handleFilterChange}
               className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Status</option>
-              <option value="pending">Pending</option>
-              <option value="in progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="unassigned">Unassigned</option>
-              <option value="assigned">Assigned</option>
+              <div></div><option value="">Status</option>
+              {/* <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Unassigned">Unassigned</option>
+              <option value="Assigned">Assigned</option> */}
+              <option value="To-Do">To-Do</option>
+              <option value="Past Due">Past Due</option>
+              <option value="Done">Done</option>
+              <option value="Invitation Expired">Invitation Expired</option>
+              <option value="Invitation Sent">Invitation Sent</option>
+              <option value="Invitation Expired">Invitation Expired</option>
+              <option value="In Progress">In Progress</option>
             </select>
             <button
               onClick={() => {
@@ -271,7 +259,7 @@ const OnboardingTasksAdmin = () => {
           </tr>
         </thead>
         <tbody>
-          {volunteers.map((volunteer, idx) => {
+          {((filter.status || filter.task)? filteredVolunteers : volunteers).map((volunteer, idx) => {
             return (
               <tr
                 key={idx}
@@ -308,22 +296,22 @@ const OnboardingTasksAdmin = () => {
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium ${
                       volunteer.currentTask?.status.toLowerCase() === "past due"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-red-100 text-red-600 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
                           "invitation sent"
-                        ? "bg-red-100 text-red-800"
+                        ? "bg-blue-100 text-blue-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
                           "invitation expired"
-                        ? "bg-yellow-100 text-yellow-800"
+                        ? "bg-grey-100 text-grey-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
                           "to-do"
-                        ? "bg-blue-100 text-blue-800"
+                        ? "bg-yellow-100 text-yellow-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
-                          "in_progress"
-                        ? "bg-purple-100 text-purple-800"
+                          "in progress"
+                        ? "bg-orange-100 text-orange-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() === "done"
-                        ? "bg-gray-100 text-yellow-600" // default color
-                        : "bg-gray-100 text-gray-800"
+                        ? "bg-gray-100 text-yellow-600 outline outline-[1px]" // default color
+                        : "bg-gray-100 text-gray-800 outline outline-[1px]"
                     }`}
                   >
                     {volunteer.currentTask?.status}
@@ -332,11 +320,18 @@ const OnboardingTasksAdmin = () => {
 
                 <td className="p-3 text-gray-800">
                   {/* {volunteer.Volunteer.time_committed_per_week} */}
-                  {volunteer.currentTask?.dueDate}
+                  {/* // Added ternary operator to check if the due date being fetched is string or object. If there is no due date 
+                  // in the db it is coming as an object which is causing problem as we cannot slice an obj. Hence the check is added.
+                  // Ideally the due date should always be present in the task. This check is added as there is absence of due date currently. */}
+                  {volunteer.currentTask?.dueDate && typeof volunteer.currentTask.dueDate=="string"?
+                      volunteer.currentTask?.dueDate.slice(5,7)+"/"+volunteer.currentTask?.dueDate.slice(8,10)+"/"+volunteer.currentTask?.dueDate.slice(2,4)
+                  :
+                      null
+                  }
                 </td>
                 <td className="p-3">{volunteer.currentTask?.task_name}</td>
                 <td className="p-3">
-                  {volunteer.currentTask?.createdAt.slice(0, 10)}
+                  {volunteer.currentTask?.createdAt.slice(5,7)+"/"+volunteer.currentTask?.createdAt.slice(8,10)+"/"+volunteer.currentTask?.createdAt.slice(2,4)}
                 </td>
                 <td className="p-3">
                   <div className="relative">

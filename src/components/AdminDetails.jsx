@@ -11,51 +11,51 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {phone} from 'phone';
 
-const useAuthToken = () => {
-  const [authToken, setAuthToken] = useState('');
-  const [tokenExpiry, setTokenExpiry] = useState(null);
+// const useAuthToken = () => {
+//   const [authToken, setAuthToken] = useState('');
+//   const [tokenExpiry, setTokenExpiry] = useState(null);
 
-  const fetchAuthToken = useCallback(async (force = false) => {
-    if (authToken && !force && tokenExpiry && new Date() < tokenExpiry) {
-      return;  
-    }
+//   const fetchAuthToken = useCallback(async (force = false) => {
+//     if (authToken && !force && tokenExpiry && new Date() < tokenExpiry) {
+//       return;  
+//     }
     
-    try {
-      const response = await axios.get('/api/api/getaccesstoken', {
-        headers: {
-          "Accept": "application/json",
-          "api-token":  "9UE2oIs29kHP1Otm5FRiH3d1jtJ-UG_qNuoaj3UM0FFSDrZIDrnsyRQMNQkI640i0VY",
-          "user-email": "kshitij.chaudhari@keelworks.org"
-        }
-      });
+//     try {
+//       const response = await axios.get('/api/api/getaccesstoken', {
+//         headers: {
+//           "Accept": "application/json",
+//           "api-token":  "9UE2oIs29kHP1Otm5FRiH3d1jtJ-UG_qNuoaj3UM0FFSDrZIDrnsyRQMNQkI640i0VY",
+//           "user-email": "kshitij.chaudhari@keelworks.org"
+//         }
+//       });
       
-      const newToken = `Bearer ${response.data.auth_token}`;
-      setAuthToken(newToken);
+//       const newToken = `Bearer ${response.data.auth_token}`;
+//       setAuthToken(newToken);
       
-      const newExpiry = new Date(new Date().getTime() + 23 * 60 * 60 * 1000);
-      setTokenExpiry(newExpiry);
+//       const newExpiry = new Date(new Date().getTime() + 23 * 60 * 60 * 1000);
+//       setTokenExpiry(newExpiry);
       
-    } catch (error) {
-      console.error('Error fetching auth token:', error);
-    }
-  }, [authToken, tokenExpiry]);
+//     } catch (error) {
+//       console.error('Error fetching auth token:', error);
+//     }
+//   }, [authToken, tokenExpiry]);
 
-  useEffect(() => {
-    fetchAuthToken();
+//   useEffect(() => {
+//     fetchAuthToken();
     
-    const intervalId = setInterval(() => {
-      fetchAuthToken(true);  
-    }, 23 * 60 * 60 * 1000);  
+//     const intervalId = setInterval(() => {
+//       fetchAuthToken(true);  
+//     }, 23 * 60 * 60 * 1000);  
     
-    return () => clearInterval(intervalId);
-  }, [fetchAuthToken]);
+//     return () => clearInterval(intervalId);
+//   }, [fetchAuthToken]);
 
-  return { authToken, fetchAuthToken };
-};
+//   return { authToken, fetchAuthToken };
+// };
 
 const AdminDetails = () => {
     const { currentUser } = useContext(UserContext);
-    const { authToken, fetchAuthToken } = useAuthToken();
+    // const { authToken, fetchAuthToken } = useAuthToken();
     const [countryList, setCountryList] = useState([]);
     const [stateList, setStateList] = useState([]);
     const [formData, setFormData] = useState({
@@ -76,55 +76,51 @@ const AdminDetails = () => {
     const USA_Visa_List = ["OPT", "CPT", "N/A"];
 
     const fetchCountries = useCallback(async () => {
-        if (!authToken || countryList.length > 0) return;
+        // if (!authToken || countryList.length > 0) return;
         setIsLoading(true);
         try {
-            const response = await axios.get('/api/api/countries/', {
-                headers: {
-                    'Authorization': authToken,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const response = await axios.get("http://localhost:3001/api/locationDropDown/countries");
+            console.log(response.data)
             setCountryList(response.data);
         } catch (error) {
             console.error('Error fetching countries:', error);
-            if (error.response && error.response.status === 401) {
-                fetchAuthToken(true);  
-            }
         } finally {
             setIsLoading(false);
         }
-    }, [authToken, countryList.length, fetchAuthToken]);
+    }, [countryList.length]);
 
-    const updateTimezones = useCallback(() => {
-        const selectedCountry = countryList.find(c => c.country_name === formData.country);
-        const country_id = selectedCountry?.country_short_name;
-        const zones = getTimezonesForCountry(country_id);
-        const updated_zones = zones?.map(zone => moment.tz(zone.name).format('z'));
-        const setOfZones = [...new Set(updated_zones)];
-        setTimezoneList(setOfZones);
-    }, [formData.country, countryList]);
+    const updateTimezones = useCallback( async() => {
+        // const selectedCountry = countryList.find(c => c.country_name === formData.country);
+        // const country_id = selectedCountry?.country_short_name;
+        // const zones = getTimezonesForCountry(country_id);
+        // const updated_zones = zones?.map(zone => moment.tz(zone.name).format('z'));
 
-    const fetchStates = useCallback(async (country) => {
-        if (!authToken || !country) return;
         setIsLoading(true);
         try {
-            const response = await axios.get(`/api/api/states/${country}`, {
-                headers: {
-                    'Authorization': authToken,
-                    'Accept': 'application/json'
-                }
-            });
-            setStateList(response.data);
+            const response = await axios.get(`http://localhost:3001/api/locationDropDown/timezones/${countryList.find(c => c.name === formData.country).iso2}`);
+            const setOfZones = [...new Set(response.data.map((timezone)=>timezone.abbreviation))];
+            setTimezoneList(setOfZones.sort())
         } catch (error) {
             console.error('Error fetching states:', error);
-            if (error.response && error.response.status === 401) {
-                fetchAuthToken(true);  
-            }
         } finally {
             setIsLoading(false);
         }
-    }, [authToken, fetchAuthToken]);
+        // const setOfZones = [...new Set(updated_zones)];
+        // setTimezoneList(setOfZones);
+    }, [formData]);
+
+    const fetchStates = useCallback(async () => {
+        // if (!authToken || !country) reurn;
+        setIsLoading(true);
+        try {
+            const response = await axios.get(`http://localhost:3001/api/locationDropDown/states/${countryList.find(c => c.name === formData.country).iso2}`);
+            setStateList(response.data.sort((a, b) => a.name.localeCompare(b.name)));
+        } catch (error) {
+            console.error('Error fetching states:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [formData]);
 
     const handleInputChange = (field, value) => {
         setFormData(prev => {
@@ -195,10 +191,10 @@ const AdminDetails = () => {
     };
 
     useEffect(() => {
-        if (authToken) {
+        
             fetchCountries();
-        }
-    }, [authToken, fetchCountries]);
+        
+    }, []);
 
     useEffect(() => {
         if (!currentUser) {
@@ -248,8 +244,8 @@ const AdminDetails = () => {
                                 >
                                     <option value="">Select..</option>
                                     {countryList.map((country) => (
-                                        <option key={country.country_name} value={country.country_name}>
-                                            {country.country_name}
+                                        <option key={country.name} value={country.name}>
+                                            {country.name}
                                         </option>
                                     ))}
                                 </select>
@@ -266,8 +262,8 @@ const AdminDetails = () => {
                                 >
                                     <option value="">Select..</option>
                                     {stateList.map((state) => (
-                                        <option key={state.state_name} value={state.state_name}>
-                                            {state.state_name}
+                                        <option key={state.name} value={state.name}>
+                                            {state.name}
                                         </option>
                                     ))}
                                 </select>
