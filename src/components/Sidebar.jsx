@@ -17,7 +17,7 @@ import keelWorksLogoBlack from "../assets/logo.png";
 import { UserContext } from "../context/UserContext";
 
 function Sidebar() {
-  const {currentUser} = useContext(UserContext);
+  const { currentUser } = useContext(UserContext);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [userAccessOpen, setUserAccessOpen] = useState(false);
   const location = useLocation();
@@ -35,15 +35,15 @@ function Sidebar() {
         KeelWorks
       </h1>
 
-      {currentUser && currentUser.role !== 'volunteer'?
-
+      {currentUser && currentUser.role !== "volunteer" ? (
         <nav>
           <ul className="space-y-2">
             <li>
               <Link
                 to="/dashboard"
-                className={`sidebar-link ${isActive("/dashboard") ? "bg-blue-100 text-blue-600" : ""
-                  }`}
+                className={`sidebar-link ${
+                  isActive("/dashboard") ? "bg-blue-100 text-blue-600" : ""
+                }`}
               >
                 <HiHome className="sidebar-icon" />
                 <span>Home</span>
@@ -52,16 +52,18 @@ function Sidebar() {
             <li>
               <button
                 onClick={() => setOnboardingOpen(!onboardingOpen)}
-                className={`sidebar-link w-full justify-between ${onboardingOpen ? "bg-blue-100 text-blue-600" : ""
-                  }`}
+                className={`sidebar-link w-full justify-between ${
+                  onboardingOpen ? "bg-blue-100 text-blue-600" : ""
+                }`}
               >
                 <div className="flex items-center">
                   <HiUserAdd className="sidebar-icon" />
                   <span>Onboarding</span>
                 </div>
                 <svg
-                  className={`h-5 w-5 transform transition-transform duration-200 ${onboardingOpen ? "rotate-180" : ""
-                    }`}
+                  className={`h-5 w-5 transform transition-transform duration-200 ${
+                    onboardingOpen ? "rotate-180" : ""
+                  }`}
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -77,10 +79,11 @@ function Sidebar() {
                   <li>
                     <Link
                       to="/onboarding/tasks"
-                      className={`sidebar-link ${isActive("/onboarding/tasks")
-                        ? "bg-blue-50 text-blue-600"
-                        : ""
-                        }`}
+                      className={`sidebar-link ${
+                        isActive("/onboarding/tasks")
+                          ? "bg-blue-50 text-blue-600"
+                          : ""
+                      }`}
                     >
                       <HiClipboardList className="sidebar-icon" />
                       <span>Tasks</span>
@@ -89,10 +92,11 @@ function Sidebar() {
                   <li>
                     <Link
                       to="/onboarding/workflow"
-                      className={`sidebar-link ${isActive("/onboarding/workflow")
-                        ? "bg-blue-50 text-blue-600"
-                        : ""
-                        }`}
+                      className={`sidebar-link ${
+                        isActive("/onboarding/workflow")
+                          ? "bg-blue-50 text-blue-600"
+                          : ""
+                      }`}
                     >
                       <HiTemplate className="sidebar-icon" />
                       <span>Workflow</span>
@@ -103,19 +107,21 @@ function Sidebar() {
             </li>
             <li>
               <Link
-                to="/project"
-                className={`sidebar-link ${isActive("/project") ? "bg-blue-100 text-blue-600" : ""
-                  }`}
+                to="/projects"
+                className={`sidebar-link ${
+                  isActive("/projects") ? "bg-blue-100 text-blue-600" : ""
+                }`}
               >
                 <HiViewGrid className="sidebar-icon" />
-                <span>Project</span>
+                <span>Projects</span>
               </Link>
             </li>
             <li>
               <Link
                 to="/volunteers"
-                className={`sidebar-link ${isActive("/volunteers") ? "bg-blue-100 text-blue-600" : ""
-                  }`}
+                className={`sidebar-link ${
+                  isActive("/volunteers") ? "bg-blue-100 text-blue-600" : ""
+                }`}
               >
                 <HiUserGroup className="sidebar-icon" />
                 <span>Volunteers</span>
@@ -125,16 +131,18 @@ function Sidebar() {
             <li>
               <button
                 onClick={() => setUserAccessOpen(!userAccessOpen)}
-                className={`sidebar-link w-full justify-between ${userAccessOpen ? "bg-blue-100 text-blue-600" : ""
-                  }`}
+                className={`sidebar-link w-full justify-between ${
+                  userAccessOpen ? "bg-blue-100 text-blue-600" : ""
+                }`}
               >
                 <div className="flex items-center">
                   <IoMdEye className="sidebar-icon" />
                   <span>User Access</span>
                 </div>
                 <svg
-                  className={`h-5 w-5 transform transition-transform duration-200 ${userAccessOpen ? "rotate-180" : ""
-                    }`}
+                  className={`h-5 w-5 transform transition-transform duration-200 ${
+                    userAccessOpen ? "rotate-180" : ""
+                  }`}
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -150,10 +158,11 @@ function Sidebar() {
                   <li>
                     <Link
                       to="/user-access/roles"
-                      className={`sidebar-link ${isActive("/user-access/roles")
-                        ? "bg-blue-50 text-blue-600"
-                        : ""
-                        }`}
+                      className={`sidebar-link ${
+                        isActive("/user-access/roles")
+                          ? "bg-blue-50 text-blue-600"
+                          : ""
+                      }`}
                     >
                       <PiUserSquareFill className="sidebar-icon" />
                       <span>Roles</span>
@@ -175,10 +184,11 @@ function Sidebar() {
                   <li>
                     <Link
                       to="/user-access/access"
-                      className={`sidebar-link ${isActive("/user-access/access")
-                        ? "bg-blue-50 text-blue-600"
-                        : ""
-                        }`}
+                      className={`sidebar-link ${
+                        isActive("/user-access/access")
+                          ? "bg-blue-50 text-blue-600"
+                          : ""
+                      }`}
                     >
                       <ImWrench className="sidebar-icon" />
                       <span>Access</span>
@@ -189,14 +199,15 @@ function Sidebar() {
             </li>
           </ul>
         </nav>
-      :
-      <nav>
+      ) : (
+        <nav>
           <ul className="space-y-2">
             <li>
               <Link
                 to="/volunteer-home"
-                className={`sidebar-link ${isActive("/volunteer-home") ? "bg-blue-100 text-blue-600" : ""
-                  }`}
+                className={`sidebar-link ${
+                  isActive("/volunteer-home") ? "bg-blue-100 text-blue-600" : ""
+                }`}
               >
                 <HiHome className="sidebar-icon" />
                 <span>Home</span>
@@ -205,8 +216,9 @@ function Sidebar() {
             <li>
               <Link
                 to="#"
-                className={`sidebar-link ${isActive("#") ? "bg-blue-100 text-blue-600" : ""
-                  }`}
+                className={`sidebar-link ${
+                  isActive("#") ? "bg-blue-100 text-blue-600" : ""
+                }`}
               >
                 <HiUserAdd className="sidebar-icon" />
                 <span>Onboarding</span>
@@ -214,7 +226,7 @@ function Sidebar() {
             </li>
           </ul>
         </nav>
-      }
+      )}
     </aside>
   );
 }

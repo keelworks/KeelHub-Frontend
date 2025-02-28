@@ -32,7 +32,7 @@ import VolunteerHome from "./pages/VolunteerHome";
 import NotificationsPage from "./components/notifications/NotificationPage";
 import OnboardingTasksAdmin from "./components/onboarding/OnboardingTasksAdmin";
 
-
+import AllProjects from "./pages/AllProjects";
 
 function App() {
   const { isLoggedIn } = useContext(UserContext);
@@ -49,8 +49,6 @@ function App() {
         <Route path="/verified" element={<VerifiedPage />} />
         <Route path="/verify-fail" element={<VerificationFail />} />
         <Route path="/acc-success" element={<AccountSuccess />} />
-
-
 
         {/* Public route that renders the Layout without sign-in */}
         <Route
@@ -131,7 +129,7 @@ function App() {
             isLoggedIn ? (
               <Layout title={"Onboarding Tasks"}>
                 {/* <VolunteerListPage /> */}
-                <OnboardingTasksAdmin/>
+                <OnboardingTasksAdmin />
               </Layout>
             ) : (
               <Navigate to="/login" />
@@ -156,6 +154,18 @@ function App() {
             isLoggedIn ? (
               <Layout>
                 <Volunteers />
+              </Layout>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            isLoggedIn ? (
+              <Layout>
+                <AllProjects />
               </Layout>
             ) : (
               <Navigate to="/login" />
