@@ -173,12 +173,8 @@ const AdminDetails = () => {
                 hasLoggedIn: true,
             };
             console.log("userData",userData)
-            await axios.put(`http://localhost:3001/api/users/${currentUser.id}`, userData, {
-                headers: {
-                    'Authorization': authToken,
-                    'Content-Type': 'application/json'
-                }
-            });
+            console.log(currentUser)
+            await axios.put(`http://localhost:3001/api/users/${currentUser.id}`, userData);
             navigate('/acc-success');
         } catch (error) {
             console.error("Error updating user data:", error);

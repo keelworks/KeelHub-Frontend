@@ -135,6 +135,9 @@ const OnboardingTasksAdmin = () => {
     filterVolunteers();
   }, [filter]);
 
+  // Pagination logic.
+  // Here we are selecting filteredVolunteers array or volunteers array based on if the filter is 
+  // applied or not. The filter here are the tasks/status which you will be able to see on this page.
   const [currentPage, setCurrentPage] = useState(0);
   const volunteersPerPage = 8;
 
@@ -143,11 +146,120 @@ const OnboardingTasksAdmin = () => {
   };
 
   const offset = currentPage * volunteersPerPage;
-  const currentVolunteers = filteredVolunteers.slice(
+  const currentVolunteers = ((filter.status || filter.task)? filteredVolunteers : volunteers).slice(
     offset,
     offset + volunteersPerPage
   );
-  const pageCount = Math.ceil(filteredVolunteers.length / volunteersPerPage);
+  const pageCount = Math.ceil(((filter.status || filter.task)? filteredVolunteers : volunteers).length / volunteersPerPage);
+
+
+  // Displaying the x/y tasks in the tasks column using the following piece of code
+  const taskProgressString = (data) => {
+    if (data.currentTask) {
+      const cleanedString = data.currentTask.progress.replace(/\s+/g, '');
+      const result = cleanedString.match(/\d\/\d+/)[0];
+      return result;
+    } else {
+      return "N/A"
+    }
+  }
+
+  //Applying sort on columns name, dueDate and dateCreated.
+
+  // SORT BY NAME
+  const[nameSort,setNameSort] = useState(false);
+  const sortByName = () => {
+    console.log("here")
+    let newOrder;
+    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+    console.log(arr)
+    if (nameSort) {
+      newOrder = [...arr].sort((a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
+
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+
+        return 0;
+      });
+    } else {
+      newOrder = [...arr].sort((a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
+
+        if (nameA < nameB) {
+          return 1;
+        }
+        if (nameA > nameB) {
+          return -1;
+        }
+
+        return 0;
+      });
+    }
+    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+    // setFilteredVolunteers(newOrder);
+    setNameSort(!nameSort);
+  };
+
+  // SORT BY DUE DATE
+
+  const [dueDateSort,setDueDateSort] = useState(false)
+
+  const sortByDueDate = () => {
+    let newOrder;
+    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+    if (dueDateSort) {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.dueDate);
+        const dateB = new Date(b.currentTask.dueDate);
+        return dateA - dateB;
+      });
+    } else {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.dueDate);
+        const dateB = new Date(b.currentTask.dueDate);
+        return dateB - dateA;
+      });
+    }
+    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+    setDueDateSort(!dueDateSort);
+    // setFilteredVolunteers(newOrder);
+  };
+
+  // SORT BY DATE CREATED
+
+  const [createDateSort,setCreateDateSort] = useState(false)
+
+  const sortByCreateDate = () => {
+    let newOrder;
+    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+    console.log(arr)
+    if (createDateSort) {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.createdAt);
+        const dateB = new Date(b.currentTask.createdAt);
+        return dateA - dateB;
+      });
+    } else {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.createdAt);
+        const dateB = new Date(b.currentTask.createdAt);
+        return dateB - dateA;
+      });
+    }
+    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+    setCreateDateSort(!createDateSort);
+    console.log("complete")
+    // setFilteredVolunteers(newOrder);
+  };
+
+
 
   return (
     <div className="p-6">
@@ -214,7 +326,7 @@ const OnboardingTasksAdmin = () => {
           <tr className="bg-gray-100 border-b border-gray-200">
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                // onClick={sortByName}
+                onClick={sortByName}
                 className="flex items-center hover:text-gray-900"
               >
                 Name <span className="ml-1">⏶⏷</span>
@@ -238,7 +350,7 @@ const OnboardingTasksAdmin = () => {
             </th>
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                // onClick={sortByHrs}
+                onClick={sortByDueDate}
                 className="flex items-center hover:text-gray-900"
               >
                 Due Date <span className="ml-1">⏶⏷</span>
@@ -247,7 +359,7 @@ const OnboardingTasksAdmin = () => {
             <th className="p-3 text-left font-semibold text-gray-600">Task</th>
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                // onClick={sortByHrs}
+                onClick={sortByCreateDate}
                 className="flex items-center hover:text-gray-900"
               >
                 Date Created <span className="ml-1">⏶⏷</span>
@@ -329,7 +441,11 @@ const OnboardingTasksAdmin = () => {
                       null
                   }
                 </td>
-                <td className="p-3">{volunteer.currentTask?.task_name}</td>
+                {/* <td className="p-3">{volunteer.currentTask?.task_name}</td> */}
+                <td className="flex flex-1 items-center pt-4 gap-2 min-w-64 ">
+                  <span className="bg-gray-100 rounded-sm p-1">{taskProgressString(volunteer)}</span>
+                  <span className="text-sm">{volunteer.currentTask.task_name}</span>
+                </td>
                 <td className="p-3">
                   {volunteer.currentTask?.createdAt.slice(5,7)+"/"+volunteer.currentTask?.createdAt.slice(8,10)+"/"+volunteer.currentTask?.createdAt.slice(2,4)}
                 </td>
@@ -378,6 +494,7 @@ const OnboardingTasksAdmin = () => {
           })}
         </tbody>
       </table>
+      <span className="text-gray-500 ">Showing {volunteers.length} results</span>
 
       <div className="mt-6">
         <ReactPaginate
@@ -394,7 +511,7 @@ const OnboardingTasksAdmin = () => {
         />
       </div>
       <div className="mt-4 text-center text-gray-600">
-        Showing {filteredVolunteers.length} results
+        Showing {((filter.status || filter.task)? filteredVolunteers : volunteers).length} results out of {((filter.status || filter.task)? filteredVolunteers : volunteers).length}
       </div>
 
       {/* <CreateAccount isOpen={isModalOpen} onClose={closeModal} /> */}
