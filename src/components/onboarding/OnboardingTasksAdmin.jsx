@@ -7,6 +7,8 @@ import axios from "axios";
 import img from "../../assets/defaultUser.jpg";
 import { FaInfoCircle, FaChevronDown, FaEllipsisH } from "react-icons/fa";
 import AssignVolunteerTask from "../AssignVolunteerTask";
+import TaskModal from "../TaskModal";
+import ConfirmDeleteModal from "../useraccess/ConfirmDeleteModal";
 
 const OnboardingTasksAdmin = () => {
   const { currentUser } = useContext(UserContext);
@@ -17,6 +19,10 @@ const OnboardingTasksAdmin = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [arr_id_roles, setArr_id_roles] = useState([]);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isConfirmDeletModalOpen, setIsConfirmDeletModalOpen] = useState(false);
+  const [currTask, setCurrTask] = useState({ taskName: "", description: "" });
+  const [currVolunteerId, setCurrVolunteerId] = useState("");
 
   //for tasks dropdown menu
   const [tasks, setTasks] = useState([]);
@@ -50,6 +56,78 @@ const OnboardingTasksAdmin = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilter({ ...filter, [name]: value });
+  };
+
+  const handleViewProfile = (task_name, description) => {
+    setActiveDropdownId(null);
+    setIsTemplateModalOpen(true);
+    // Update the currTask state
+    setCurrTask({
+      taskName: task_name || "", // Fallback to an empty string if task_name is undefined
+      description: description || "", // Fallback to an empty string if description is undefined
+    });
+  };
+
+  const handleOnboaringComplete = (volunteerId) => {
+    setActiveDropdownId(null);
+    setIsConfirmDeletModalOpen(true);
+    setCurrVolunteerId(volunteerId);
+  };
+
+  const handleConfirmDelete = async () => {
+    console.log("inside handleconfirm");
+    try {
+      const id = currVolunteerId; // Use the current volunteer ID as specified
+
+      console.log("V ID is", id);
+      // Update volunteer task status
+      const volunteerTaskObj = {
+        status: "complete",
+      };
+
+      const volunteerTaskResponse = await axios.put(
+        `http://localhost:3001/api/volunteer-tasks/${id}`,
+        volunteerTaskObj,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Volunteer task updated:", volunteerTaskResponse.data);
+
+      // Update volunteer status
+      const volunteerBody = {
+        status: "complete",
+      };
+
+      const volunteerResponse = await axios.put(
+        `http://localhost:3001/api/volunteers/${id}`,
+        volunteerBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Volunteer updated:", volunteerResponse.data);
+
+      // Close the confirmation modal
+      setIsConfirmDeletModalOpen(false);
+
+      // Refresh the table
+      refreshTable();
+
+      // Optional: Notify the user of success
+      alert("Task and volunteer updated successfully.");
+    } catch (error) {
+      console.error("Error during update:", error);
+
+      // Handle errors and notify the user
+      alert("Failed to update the task and volunteer. Please try again.");
+    }
   };
 
   // Fetching volunteers for getting their roles seperately because, the fetchAllVolunteers() isn't bring the respective role of the volunteer.
@@ -93,7 +171,7 @@ const OnboardingTasksAdmin = () => {
           },
         }
       );
-      // console.log("response.data.data",response.data.data)
+      console.log("response.data.data", response.data.data);
       setVolunteers(response.data.data);
       setFilteredVolunteers(response.data.data);
     } catch (error) {
@@ -360,16 +438,21 @@ const OnboardingTasksAdmin = () => {
                           // onClick={handleEditProfile}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                         >
-                          Edit Profile
+                          Edit Task
                         </button>
                         <button
-                          // onClick={handleViewProfile}
+                          onClick={() =>
+                            handleViewProfile(
+                              volunteer.currentTask?.task_name,
+                              volunteer.currentTask?.description
+                            )
+                          }
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                         >
-                          View Profile
+                          View Task
                         </button>
                         <button
-                          // onClick={handleViewProfile}
+                          onClick={() => handleOnboaringComplete(volunteer.id)}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                         >
                           Onboarding Complete
@@ -407,6 +490,20 @@ const OnboardingTasksAdmin = () => {
         onSuccess={refreshTable}
         isOpen={isModalOpen}
         onClose={closeModal}
+      />
+      <TaskModal
+        isOpen={isTemplateModalOpen}
+        closeModal={() => setIsTemplateModalOpen(false)}
+        initialTask={currTask}
+        editView={true}
+        isTemplateView={false}
+        // onCopyTemplate={handleCopyTemplate}
+      />
+      <ConfirmDeleteModal
+        isOpen={isConfirmDeletModalOpen}
+        OnboardingCompleteConfirmation={true}
+        onClose={() => setIsConfirmDeletModalOpen(false)}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );
