@@ -55,6 +55,21 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
     }
   }, [taskList]);
 
+  const showErrorToast = (volunteerName) => {
+    toast.error(
+      <div>
+        <strong>Unable to add "{volunteerName}"</strong>
+        <div style={{ fontSize: "0.85rem", color: "gray" }}>
+          Please try again
+        </div>
+      </div>,
+      {
+        position: "top-right",
+        autoClose: 3000,
+      }
+    );
+  };
+
   const fetchAllTasks = async () => {
     try {
       const data = await axios.get("http://localhost:3001/api/tasks/", {
@@ -77,6 +92,12 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
     setFormData((prevState) => ({
       ...prevState,
       [id]: value,
+      email:
+        id === "name"
+          ? value
+            ? `${value.replace(" ", ".")}@keelworks.org`
+            : ""
+          : prevState.email,
     }));
   };
 
@@ -96,13 +117,11 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
 
     // Validate input fields
     if (!formData.name || !formData.email || !formData.role || !formData.task) {
-      setError("All fields are required.");
-      return;
+      throw new Error(`Error in the fields`);
     }
 
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setError("Please enter a valid email address.");
-      return;
+      throw new Error(`Error in the email field`);
     }
 
     try {
@@ -129,8 +148,7 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
       );
 
       if (!filteredUsers.length) {
-        setError("Volunteer not found. Please check the email address.");
-        return;
+        throw new Error(`Error in the filtered users`);
       }
 
       const volunteer_id = filteredUsers[0].id;
@@ -153,8 +171,7 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
       );
 
       if (!filteredTasks.length) {
-        setError("Task not found. Please check the task name.");
-        return;
+        throw new Error(`Error in the filtered tasks`);
       }
 
       const task_id = filteredTasks[0].id;
@@ -241,10 +258,9 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
       }, 2000);
     } catch (error) {
       console.error("Error occurred: ", error);
-      const message =
-        error.response?.data?.error || "An unexpected error occurred.";
-      toast.error(message);
-      setError(message);
+      const message = formData.name;
+      showErrorToast(message);
+      //toast.error(message);
     }
   };
 
@@ -258,16 +274,24 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
     >
       <ToastContainer />
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h1 className="text-xl font-semibold mb-4">
-          Add New Volunteer with Task
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-semibold mb-4">
+            New Onboarding Volunteer
+          </h1>
+          <button
+            onClick={onClose}
+            className="text-2xl text-gray-500 hover:text-gray-700"
+          >
+            &times;
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-bold text-gray-700"
             >
-              Name:
+              Name*
             </label>
             <input
               type="text"
@@ -275,31 +299,33 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
               value={formData.name}
               onChange={handleChange}
               required
+              placeholder="John Doe"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
           </div>
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-bold text-gray-700"
             >
-              Email:
+              Email (Autofill)
             </label>
             <input
               type="text"
               id="email"
               value={formData.email}
               onChange={handleChange}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="John.Doe@keelworks.org"
+              readOnly
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-100 text-gray-400"
             />
           </div>
           <div>
             <label
               htmlFor="role"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-bold text-gray-700"
             >
-              Role:
+              Role*
             </label>
             <select
               id="role"
@@ -317,9 +343,9 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
           <div>
             <label
               htmlFor="task"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-bold text-gray-700"
             >
-              Task:
+              Task*
             </label>
             <select
               id="task"
@@ -329,7 +355,7 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
             >
               {taskList?.map((task, index) => (
                 <option key={index} value={task}>
-                  {task}
+                  {index + 1}. {task}
                 </option>
               ))}
             </select>
@@ -347,7 +373,7 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
               onClick={handleSubmit}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Save
+              Start
             </button>
           </div>
         </form>

@@ -1,13 +1,23 @@
 import React from "react";
 
-const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, userName }) => {
+const ConfirmDeleteModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  userName,
+  OnboardingCompleteConfirmation = false,
+}) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full m-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Delete Invite</h2>
+          <h2 className="text-xl font-bold">
+            {OnboardingCompleteConfirmation
+              ? "Complete Onboarding?"
+              : "Delete Invite"}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -15,10 +25,14 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, userName }) => {
             &times;
           </button>
         </div>
-        <p className="mb-4">
-          You are about to delete the invite to <strong>{userName}</strong>.
+        <p className="mb-4  text-gray-600">
+          {OnboardingCompleteConfirmation
+            ? "Are you sure the onboarding steps are complete for this volunteer?"
+            : `You are about to delete the invite to ${userName}.`}
         </p>
-        <p className="mb-6 text-gray-600">This is a permanent action.</p>
+        {!OnboardingCompleteConfirmation && (
+          <p className="mb-6 text-gray-600">This is a permanent action.</p>
+        )}
         <div className="flex justify-end space-x-2">
           <button
             onClick={onClose}
@@ -28,9 +42,13 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, userName }) => {
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className={`px-4 py-2 rounded text-white ${
+              OnboardingCompleteConfirmation
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-red-600 hover:bg-red-700"
+            }`}
           >
-            Delete Invite
+            {OnboardingCompleteConfirmation ? "Yes" : "Delete Invite"}
           </button>
         </div>
       </div>
