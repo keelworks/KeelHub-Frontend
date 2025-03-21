@@ -58,6 +58,7 @@ const OnboardingTasksAdmin = () => {
     setFilter({ ...filter, [name]: value });
   };
 
+
   const handleViewProfile = (task_name, description) => {
     setActiveDropdownId(null);
     setIsTemplateModalOpen(true);
@@ -130,6 +131,14 @@ const OnboardingTasksAdmin = () => {
     }
   };
 
+  // This function is responsible for fetching all the tasks from the db
+  const fetchAllTasks = async () => {
+    const response = await axios.get("http://localhost:3001/api/tasks/onboarding");
+    setTasks(response.data);
+    console.log("Tasks", response.data)
+  }
+
+
   // Fetching volunteers for getting their roles seperately because, the fetchAllVolunteers() isn't bring the respective role of the volunteer.
   const fetchAllVolunteersForRole = async () => {
     try {
@@ -180,32 +189,35 @@ const OnboardingTasksAdmin = () => {
   };
 
   useEffect(() => {
+    fetchAllTasks();
     fetchAllVolunteersForRole();
     fetchVolunteers();
   }, [reload]);
 
+  // This useEffect will run when filter by either status or task is applied by the user and the list of volunteers will be 
+  // updated accordingly.
   useEffect(() => {
     const filterVolunteers = () => {
       let result = [...volunteers];
-      // console.log("use effect filter.active: ", filter.Active);
-      if (filter.Active === "true" || filter.Active === "false") {
-        result = result.filter((v) => v.is_active.toString() === filter.Active);
-      }
 
-      if (filter.status) {
-        result = result.filter((v) => v.Volunteer.status === filter.status);
+      if (filter.task || filter.status){
+          if(filter.task){
+            result = result.filter((v) => v.currentTask.task_name === filter.task)
+          }
+          if(filter.status){
+            result = result.filter((v) => v.currentTask.status === filter.status)
+          }
       }
-
-      if (filter.role) {
-        result = result.filter(
-          (v) => v.Volunteer.jobTitles[0]?.title === filter.role
-        );
-      }
+      console.log(result)
+      
       setFilteredVolunteers(result);
     };
     filterVolunteers();
   }, [filter]);
 
+  // Pagination logic.
+  // Here we are selecting filteredVolunteers array or volunteers array based on if the filter is 
+  // applied or not. The filter here are the tasks/status which you will be able to see on this page.
   const [currentPage, setCurrentPage] = useState(0);
   const volunteersPerPage = 8;
 
@@ -214,70 +226,160 @@ const OnboardingTasksAdmin = () => {
   };
 
   const offset = currentPage * volunteersPerPage;
-  const currentVolunteers = filteredVolunteers.slice(
+  const currentVolunteers = ((filter.status || filter.task)? filteredVolunteers : volunteers).slice(
     offset,
     offset + volunteersPerPage
   );
-  const pageCount = Math.ceil(filteredVolunteers.length / volunteersPerPage);
+  const pageCount = Math.ceil(((filter.status || filter.task)? filteredVolunteers : volunteers).length / volunteersPerPage);
+
+
+  // Displaying the x/y tasks in the tasks column using the following piece of code
+  const taskProgressString = (data) => {
+    if (data.currentTask) {
+      const cleanedString = data.currentTask.progress.replace(/\s+/g, '');
+      const result = cleanedString.match(/\d\/\d+/)[0];
+      return result;
+    } else {
+      return "N/A"
+    }
+  }
+
+  //Applying sort on columns name, dueDate and dateCreated.
+
+  // SORT BY NAME
+  const[nameSort,setNameSort] = useState(false);
+  const sortByName = () => {
+    console.log("here")
+    let newOrder;
+    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+    console.log(arr)
+    if (nameSort) {
+      newOrder = [...arr].sort((a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
+
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+
+        return 0;
+      });
+    } else {
+      newOrder = [...arr].sort((a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
+
+        if (nameA < nameB) {
+          return 1;
+        }
+        if (nameA > nameB) {
+          return -1;
+        }
+
+        return 0;
+      });
+    }
+    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+    // setFilteredVolunteers(newOrder);
+    setNameSort(!nameSort);
+  };
+
+  // SORT BY DUE DATE
+
+  const [dueDateSort,setDueDateSort] = useState(false)
+
+  const sortByDueDate = () => {
+    let newOrder;
+    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+    if (dueDateSort) {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.dueDate);
+        const dateB = new Date(b.currentTask.dueDate);
+        return dateA - dateB;
+      });
+    } else {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.dueDate);
+        const dateB = new Date(b.currentTask.dueDate);
+        return dateB - dateA;
+      });
+    }
+    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+    setDueDateSort(!dueDateSort);
+    // setFilteredVolunteers(newOrder);
+  };
+
+  // SORT BY DATE CREATED
+
+  const [createDateSort,setCreateDateSort] = useState(false)
+
+  const sortByCreateDate = () => {
+    let newOrder;
+    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+    console.log(arr)
+    if (createDateSort) {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.createdAt);
+        const dateB = new Date(b.currentTask.createdAt);
+        return dateA - dateB;
+      });
+    } else {
+      newOrder = [...arr].sort((a, b) => {
+        const dateA = new Date(a.currentTask.createdAt);
+        const dateB = new Date(b.currentTask.createdAt);
+        return dateB - dateA;
+      });
+    }
+    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+    setCreateDateSort(!createDateSort);
+    console.log("complete")
+    // setFilteredVolunteers(newOrder);
+  };
+
+
 
   return (
     <div className="p-6">
-      {/* <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-700">Filter by:</span>
-          <select
-            name="task"
-            value={filter.task}
-            onChange={handleFilterChange}
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Task</option>
-            <option value="pending">Pending</option>
-            <option value="in progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="unassigned">Unassigned</option>
-            <option value="assigned">Assigned</option>
-          </select>
-          <select
-            name="status"
-            value={filter.status}
-            onChange={handleFilterChange}
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="All">Status</option>
-            <option value="Website Redesign">Website Redesign</option>
-            <option value="Portfolio Builder">Portfolio Builder</option>
-          </select>
-        </div>
-      </div> */}
-
       <br></br>
       <div>
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
             <span className="text-gray-700">Filter by:</span>
             <select
-              name="Task"
-              value={filter.Task}
+              name="task"
+              value={filter.task}
               onChange={handleFilterChange}
-              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-28 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="All">Task 1</option>
-              <option value={true}>Task 1</option>
-              <option value={false}>Task 2</option>
+              <option value="">Task</option>
+              {
+                tasks? tasks.map((task,idx)=>(
+                   <option key={idx}>{task.task_name}</option>
+                )) : null
+              }
             </select>
             <select
               name="status"
-              value={filter.Status}
+              value={filter.status}
               onChange={handleFilterChange}
               className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Status</option>
-              <option value="pending">Pending</option>
-              <option value="in progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="unassigned">Unassigned</option>
-              <option value="assigned">Assigned</option>
+              <div></div><option value="">Status</option>
+              {/* <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Unassigned">Unassigned</option>
+              <option value="Assigned">Assigned</option> */}
+              <option value="To-Do">To-Do</option>
+              <option value="Past Due">Past Due</option>
+              <option value="Done">Done</option>
+              <option value="Invitation Expired">Invitation Expired</option>
+              <option value="Invitation Sent">Invitation Sent</option>
+              <option value="Invitation Expired">Invitation Expired</option>
+              <option value="In Progress">In Progress</option>
             </select>
             <button
               onClick={() => {
@@ -304,7 +406,7 @@ const OnboardingTasksAdmin = () => {
           <tr className="bg-gray-100 border-b border-gray-200">
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                // onClick={sortByName}
+                onClick={sortByName}
                 className="flex items-center hover:text-gray-900"
               >
                 Name <span className="ml-1">⏶⏷</span>
@@ -328,7 +430,7 @@ const OnboardingTasksAdmin = () => {
             </th>
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                // onClick={sortByHrs}
+                onClick={sortByDueDate}
                 className="flex items-center hover:text-gray-900"
               >
                 Due Date <span className="ml-1">⏶⏷</span>
@@ -337,7 +439,7 @@ const OnboardingTasksAdmin = () => {
             <th className="p-3 text-left font-semibold text-gray-600">Task</th>
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                // onClick={sortByHrs}
+                onClick={sortByCreateDate}
                 className="flex items-center hover:text-gray-900"
               >
                 Date Created <span className="ml-1">⏶⏷</span>
@@ -349,7 +451,7 @@ const OnboardingTasksAdmin = () => {
           </tr>
         </thead>
         <tbody>
-          {volunteers.map((volunteer, idx) => {
+          {((filter.status || filter.task)? filteredVolunteers : volunteers).map((volunteer, idx) => {
             return (
               <tr
                 key={idx}
@@ -386,22 +488,22 @@ const OnboardingTasksAdmin = () => {
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium ${
                       volunteer.currentTask?.status.toLowerCase() === "past due"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-red-100 text-red-600 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
                           "invitation sent"
-                        ? "bg-red-100 text-red-800"
+                        ? "bg-blue-100 text-blue-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
                           "invitation expired"
-                        ? "bg-yellow-100 text-yellow-800"
+                        ? "bg-grey-100 text-grey-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
                           "to-do"
-                        ? "bg-blue-100 text-blue-800"
+                        ? "bg-yellow-100 text-yellow-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() ===
-                          "in_progress"
-                        ? "bg-purple-100 text-purple-800"
+                          "in progress"
+                        ? "bg-orange-100 text-orange-800 outline outline-[1px]"
                         : volunteer.currentTask?.status.toLowerCase() === "done"
-                        ? "bg-gray-100 text-yellow-600" // default color
-                        : "bg-gray-100 text-gray-800"
+                        ? "bg-gray-100 text-yellow-600 outline outline-[1px]" // default color
+                        : "bg-gray-100 text-gray-800 outline outline-[1px]"
                     }`}
                   >
                     {volunteer.currentTask?.status}
@@ -410,11 +512,22 @@ const OnboardingTasksAdmin = () => {
 
                 <td className="p-3 text-gray-800">
                   {/* {volunteer.Volunteer.time_committed_per_week} */}
-                  {volunteer.currentTask?.dueDate}
+                  {/* // Added ternary operator to check if the due date being fetched is string or object. If there is no due date 
+                  // in the db it is coming as an object which is causing problem as we cannot slice an obj. Hence the check is added.
+                  // Ideally the due date should always be present in the task. This check is added as there is absence of due date currently. */}
+                  {volunteer.currentTask?.dueDate && typeof volunteer.currentTask.dueDate=="string"?
+                      volunteer.currentTask?.dueDate.slice(5,7)+"/"+volunteer.currentTask?.dueDate.slice(8,10)+"/"+volunteer.currentTask?.dueDate.slice(2,4)
+                  :
+                      null
+                  }
                 </td>
-                <td className="p-3">{volunteer.currentTask?.task_name}</td>
+                {/* <td className="p-3">{volunteer.currentTask?.task_name}</td> */}
+                <td className="flex flex-1 items-center pt-4 gap-2 min-w-64 ">
+                  <span className="bg-gray-100 rounded-sm p-1">{taskProgressString(volunteer)}</span>
+                  <span className="text-sm">{volunteer.currentTask.task_name}</span>
+                </td>
                 <td className="p-3">
-                  {volunteer.currentTask?.createdAt.slice(0, 10)}
+                  {volunteer.currentTask?.createdAt.slice(5,7)+"/"+volunteer.currentTask?.createdAt.slice(8,10)+"/"+volunteer.currentTask?.createdAt.slice(2,4)}
                 </td>
                 <td className="p-3">
                   <div className="relative">
@@ -466,6 +579,7 @@ const OnboardingTasksAdmin = () => {
           })}
         </tbody>
       </table>
+      <span className="text-gray-500 ">Showing {volunteers.length} results</span>
 
       <div className="mt-6">
         <ReactPaginate
@@ -482,7 +596,7 @@ const OnboardingTasksAdmin = () => {
         />
       </div>
       <div className="mt-4 text-center text-gray-600">
-        Showing {filteredVolunteers.length} results
+        Showing {((filter.status || filter.task)? filteredVolunteers : volunteers).length} results out of {((filter.status || filter.task)? filteredVolunteers : volunteers).length}
       </div>
 
       {/* <CreateAccount isOpen={isModalOpen} onClose={closeModal} /> */}
