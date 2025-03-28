@@ -217,15 +217,38 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
       const VolunteerBody = {
         status: "in_progress",
       };
-      const volunteerResponse = await axios.put(
+
+      // Fetch the current volunteer data
+      const currentVolunteer = await axios.get(
         `http://localhost:3001/api/volunteers/${volunteer_id}`,
-        VolunteerBody,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
+
+      console.log("GET REQUEST DONE");
+
+      // Check if the current status is already "in_progress"
+      if (currentVolunteer.data.status === "in_progress") {
+        console.warn("No changes detected, skipping request");
+      } else {
+        // Proceed with the update if the status is different
+        const volunteerResponse = await axios.put(
+          `http://localhost:3001/api/volunteers/${volunteer_id}`,
+          VolunteerBody,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(
+          "Volunteer status updated successfully!",
+          volunteerResponse.data
+        );
+      }
 
       if (volunteerTaskResponse.status === 201) {
         console.log("Volunteer-task created successfully.");
