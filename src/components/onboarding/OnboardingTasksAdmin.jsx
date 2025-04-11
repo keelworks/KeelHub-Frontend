@@ -9,6 +9,7 @@ import { FaInfoCircle, FaChevronDown, FaEllipsisH } from "react-icons/fa";
 import AssignVolunteerTask from "../AssignVolunteerTask";
 import TaskModal from "../TaskModal";
 import ConfirmDeleteModal from "../useraccess/ConfirmDeleteModal";
+import PaginationButtons from "../PaginationButtons";
 
 const OnboardingTasksAdmin = () => {
   const { currentUser } = useContext(UserContext);
@@ -23,6 +24,7 @@ const OnboardingTasksAdmin = () => {
   const [isConfirmDeletModalOpen, setIsConfirmDeletModalOpen] = useState(false);
   const [currTask, setCurrTask] = useState({ taskName: "", description: "" });
   const [currVolunteerId, setCurrVolunteerId] = useState("");
+  const [totalNoOfVolunteersWithActiveTasks, setTotalNoOfVolunteersWithActiveTasks] = useState(0)
 
   //for tasks dropdown menu
   const [tasks, setTasks] = useState([]);
@@ -32,8 +34,8 @@ const OnboardingTasksAdmin = () => {
 
   const [filteredVolunteers, setFilteredVolunteers] = useState([]);
   const defaultFilter = {
-    status: "",
-    task: "",
+    status: "status",
+    taskId: 0,
   };
   const [filter, setFilter] = useState(defaultFilter);
 
@@ -55,6 +57,7 @@ const OnboardingTasksAdmin = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
+    console.log(name,value)
     setFilter({ ...filter, [name]: value });
   };
 
@@ -137,52 +140,26 @@ const OnboardingTasksAdmin = () => {
     setTasks(response.data);
     console.log("Tasks", response.data)
   }
+ 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10)
+  const volunteersPerPage = 8;
 
-
-  // Fetching volunteers for getting their roles seperately because, the fetchAllVolunteers() isn't bring the respective role of the volunteer.
-  const fetchAllVolunteersForRole = async () => {
-    try {
-      const volunteersWithRole = await axios.get(
-        `http://localhost:3001/api/volunteers/all`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("volunteersWithRoles", volunteersWithRole.data.data);
-      // setVolunteersWithRoles(volunteersWithRole?.data?.data)
-      let ids = [];
-      // console.log('here')
-      for (let i = 0; i < volunteersWithRole.data.data.length; i++) {
-        ids.push({
-          id: volunteersWithRole.data.data[i]?.id,
-          role: volunteersWithRole.data.data[i]?.Volunteer.jobTitles[0]?.title,
-        });
-      }
-      // console.log("arr_id_roles", ids);
-      setArr_id_roles(ids);
-    } catch (error) {
-      console.log(error.response);
-    }
-  };
-
-  // For fetching volunteers without roles (prob needs to be fixed so that we
-  // do not have to make extra API call for getting the roles of the volunteers)
   const fetchVolunteers = async () => {
     try {
-      fetchAllVolunteersForRole();
+      // fetchAllVolunteersForRole();
       const response = await axios.get(
-        `http://localhost:3001/api/volunteer-tasks/admin/volunteers`,
+        `http://localhost:3001/api/volunteer-tasks/admin/volunteers?page=${currentPage}&pageSize=${pageSize}&taskId=${filter.taskId}&taskStatus=${filter.status}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      console.log("response.data.data", response.data.data);
+      console.log("Volunteers Data", response.data.data);
       setVolunteers(response.data.data);
       setFilteredVolunteers(response.data.data);
+      setTotalNoOfVolunteersWithActiveTasks(response.data.totalActiveTasks)
     } catch (error) {
       console.log(error.response);
     }
@@ -190,39 +167,20 @@ const OnboardingTasksAdmin = () => {
 
   useEffect(() => {
     fetchAllTasks();
-    fetchAllVolunteersForRole();
     fetchVolunteers();
-  }, [reload]);
+  }, [reload,filter,currentPage,pageSize]);
 
-  // This useEffect will run when filter by either status or task is applied by the user and the list of volunteers will be 
-  // updated accordingly.
-  useEffect(() => {
-    const filterVolunteers = () => {
-      let result = [...volunteers];
 
-      if (filter.task || filter.status){
-          if(filter.task){
-            result = result.filter((v) => v.currentTask.task_name === filter.task)
-          }
-          if(filter.status){
-            result = result.filter((v) => v.currentTask.status === filter.status)
-          }
-      }
-      console.log(result)
-      
-      setFilteredVolunteers(result);
-    };
-    filterVolunteers();
-  }, [filter]);
 
   // Pagination logic.
   // Here we are selecting filteredVolunteers array or volunteers array based on if the filter is 
   // applied or not. The filter here are the tasks/status which you will be able to see on this page.
-  const [currentPage, setCurrentPage] = useState(0);
-  const volunteersPerPage = 8;
+
 
   const handlePageChange = ({ selected }) => {
-    setCurrentPage(selected);
+    console.log("OnPageChange",selected,currentPage)
+    currentPage?setCurrentPage((prev)=>prev+1):setCurrentPage((prev)=>prev-1);
+    fetchVolunteers();
   };
 
   const offset = currentPage * volunteersPerPage;
@@ -342,44 +300,48 @@ const OnboardingTasksAdmin = () => {
 
 
   return (
-    <div className="p-6">
+    <div className="p-3 mb-20">
+       <h1 className="text-5xl font-medium mb-2">Tasks</h1>
+       <span className="text-gray-500 text-sm ml-1">Volunteer's OnBoarding Tracker</span>
       <br></br>
       <div>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 mt-10">
           <div className="flex items-center space-x-4">
             <span className="text-gray-700">Filter by:</span>
             <select
-              name="task"
-              value={filter.task}
-              onChange={handleFilterChange}
-              className="w-28 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Task</option>
-              {
-                tasks? tasks.map((task,idx)=>(
-                   <option key={idx}>{task.task_name}</option>
-                )) : null
-              }
+                name="taskId"
+                value={filter.task}
+                onChange={handleFilterChange}
+                className="w-28 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={0}>Task</option>
+                {tasks &&
+                  tasks.map((task, idx) => (
+                    <option key={idx} value={task.id}>
+                      {`${task.id}/${tasks.length} - ${task.task_name}`}
+                    </option>
+                  ))}
             </select>
+
+            {/* <td className="flex flex-1 items-center pt-4 gap-2 min-w-64 ">
+                  <span className="bg-gray-100 rounded-sm p-1">{taskProgressString(volunteer)}</span>
+                  <span className="text-sm">{volunteer.currentTask.task_name}</span>
+                </td> */}
             <select
               name="status"
               value={filter.status}
               onChange={handleFilterChange}
               className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <div></div><option value="">Status</option>
-              {/* <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Unassigned">Unassigned</option>
-              <option value="Assigned">Assigned</option> */}
+              <div></div><option value="status">Status</option>
               <option value="To-Do">To-Do</option>
               <option value="Past Due">Past Due</option>
               <option value="Done">Done</option>
               <option value="Invitation Expired">Invitation Expired</option>
               <option value="Invitation Sent">Invitation Sent</option>
-              <option value="Invitation Expired">Invitation Expired</option>
               <option value="In Progress">In Progress</option>
+              {/* <span className="bg-gray-100 rounded-sm p-1">{taskProgressString(volunteer)}</span>
+                  <span className="text-sm">{volunteer.currentTask.task_name}</span> */}
             </select>
             <button
               onClick={() => {
@@ -395,7 +357,7 @@ const OnboardingTasksAdmin = () => {
               onClick={openModal}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              + New Volunteer
+              + Onboard Volunteer
             </button>
           </div>
         </div>
@@ -478,8 +440,7 @@ const OnboardingTasksAdmin = () => {
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium ${"bg-green-100 text-green-800"}`}
                   >
-                    {arr_id_roles.find((id) => id.id === volunteer.id)?.role ||
-                      null}
+                      {volunteer.jobTitles[0]}
                   </span>
                 </td>
                 {/* <td className="p-3 text-gray-800">{formattedDate}</td> */}
@@ -578,26 +539,47 @@ const OnboardingTasksAdmin = () => {
             );
           })}
         </tbody>
-      </table>
-      <span className="text-gray-500 ">Showing {volunteers.length} results</span>
+        <tfoot className="mt-10">
+        <tr>
+          <td colSpan="100%" className="pt-6">
+            <div className="flex justify-between items-center px-4 py-2 w-full">
+              {/* Left Section */}
+              <div className="flex items-center gap-2">
+                <span className="mt-1">Rows per page</span>
+                <select
+                  name="number"
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="w-16 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select</option>
+                  {Array.from({ length: 15 }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-      <div className="mt-6">
-        <ReactPaginate
-          previousLabel={"Previous"}
-          nextLabel={"Next"}
-          pageCount={pageCount}
-          onPageChange={handlePageChange}
-          containerClassName={"flex justify-center space-x-2"}
-          pageClassName={"px-3 py-2 rounded border hover:bg-gray-100"}
-          activeClassName={"bg-blue-500 text-white"}
-          previousClassName={"px-3 py-2 rounded border hover:bg-gray-100"}
-          nextClassName={"px-3 py-2 rounded border hover:bg-gray-100"}
-          disabledClassName={"opacity-50 cursor-not-allowed"}
-        />
-      </div>
-      <div className="mt-4 text-center text-gray-600">
-        Showing {((filter.status || filter.task)? filteredVolunteers : volunteers).length} results out of {((filter.status || filter.task)? filteredVolunteers : volunteers).length}
-      </div>
+              {/* Center Section */}
+              <div className="ml-auto">
+                {`${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalNoOfVolunteersWithActiveTasks)} of ${totalNoOfVolunteersWithActiveTasks}`}
+              </div>
+
+              {/* Right Section */}
+              <div className="ml-auto">
+              <PaginationButtons 
+                page={currentPage} 
+                setPage={setCurrentPage} 
+                totalPages={Math.ceil(totalNoOfVolunteersWithActiveTasks / pageSize)} 
+              />
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+      </table>
+
 
       {/* <CreateAccount isOpen={isModalOpen} onClose={closeModal} /> */}
       <AssignVolunteerTask
