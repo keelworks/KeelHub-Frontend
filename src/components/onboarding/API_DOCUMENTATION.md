@@ -67,7 +67,7 @@ headers: {
 **Endpoint:** `/volunteer-tasks/admin/volunteers`  
 **Method:** GET  
 **Authentication:** Required  
-**Query Parameters:** `page=1`
+**Query Parameters:** `?page=${currentPage}&pageSize=${pageSize}&taskId=${filter.taskId}&taskStatus=${filter.status}`
 
 **Response:**
 

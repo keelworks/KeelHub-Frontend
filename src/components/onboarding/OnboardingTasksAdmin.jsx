@@ -149,7 +149,7 @@ const OnboardingTasksAdmin = () => {
     try {
       // fetchAllVolunteersForRole();
       const response = await axios.get(
-        `http://localhost:3001/api/volunteer-tasks/admin/volunteers?page=${currentPage}&pageSize=${pageSize}&taskId=${filter.taskId}&taskStatus=${filter.status}`,
+        `http://localhost:3001/api/volunteer-tasks/admin/volunteers/paginationAndFilters?page=${currentPage}&pageSize=${pageSize}&taskId=${filter.taskId}&taskStatus=${filter.status}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
