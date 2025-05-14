@@ -22,6 +22,7 @@ const OnboardingTasks = () => {
   const fetchTasks = async () => {
     try {
       const response = await axios.get('http://localhost:3001/api/tasks/onboarding');
+      console.log("TASKS",response.data)
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -138,6 +139,7 @@ const OnboardingTasks = () => {
                 <tr className="text-gray-600 uppercase text-sm leading-normal">
                   <th className="py-3 px-6 text-left">Task Name</th>
                   <th className="py-3 px-6 text-left">Template</th>
+                  <th className="py-3 px-6 text-left">Due Date</th>
                   <th className="py-3 px-6 text-center">Actions</th>
                 </tr>
               </thead>
@@ -162,6 +164,9 @@ const OnboardingTasks = () => {
                           >
                             <HiOutlineTemplate size={20} />
                           </button>
+                        </td>
+                        <td className="py-3 px-6 text-left">
+                          {task.due_date} days
                         </td>
                         <td className="py-3 px-6 text-center">
                           <button 

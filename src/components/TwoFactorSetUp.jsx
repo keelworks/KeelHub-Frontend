@@ -42,7 +42,11 @@ const TwoFactorSetUp = () =>  {
         }); 
 
         console.log("response",response)
-        navigate('/admin-details',{replace:true})
+
+        (currentUser.role === admin)?
+        navigate('/admin-details',{replace:true}):
+        navigate('/dashboard',{replace:true})
+        
       }catch(e){
         setError(true);
       }

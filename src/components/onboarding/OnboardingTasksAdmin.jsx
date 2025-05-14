@@ -10,6 +10,7 @@ import AssignVolunteerTask from "../AssignVolunteerTask";
 import TaskModal from "../TaskModal";
 import ConfirmDeleteModal from "../useraccess/ConfirmDeleteModal";
 import PaginationButtons from "../PaginationButtons";
+import { FiCopy } from "react-icons/fi";
 
 const OnboardingTasksAdmin = () => {
   const { currentUser } = useContext(UserContext);
@@ -193,15 +194,18 @@ const OnboardingTasksAdmin = () => {
 
   // Displaying the x/y tasks in the tasks column using the following piece of code
   const taskProgressString = (data) => {
-    if (data.currentTask) {
+    if (data.currentTask && data.currentTask.progress) {
       const cleanedString = data.currentTask.progress.replace(/\s+/g, '');
-      const result = cleanedString.match(/\d\/\d+/)[0];
-      return result;
-    } else {
-      return "N/A"
+      const match = cleanedString.match(/(\d+)\/\d+/); // Get number before the slash
+      if (match) {
+        const current = match[1];          // Number before slash
+        const total = tasks.length || 0;   // Total from tasks array
+        return `${current}/${total}`;
+      }
     }
-  }
-
+  
+    return "N/A";
+  };
   //Applying sort on columns name, dueDate and dateCreated.
 
   // SORT BY NAME
@@ -297,6 +301,14 @@ const OnboardingTasksAdmin = () => {
     // setFilteredVolunteers(newOrder);
   };
 
+  const onCopyTemplate = (task) => {
+    if (task) {
+      navigator.clipboard.writeText(task)
+        .then(() => alert('Template copied to clipboard!'))
+        .catch(err => console.error('Failed to copy template: ', err));
+    }
+  };
+
 
 
   return (
@@ -318,7 +330,7 @@ const OnboardingTasksAdmin = () => {
                 {tasks &&
                   tasks.map((task, idx) => (
                     <option key={idx} value={task.id}>
-                      {`${task.id}/${tasks.length} - ${task.task_name}`}
+                      {`${idx+1}/${tasks.length} - ${task.task_name}`}
                     </option>
                   ))}
             </select>
@@ -483,9 +495,22 @@ const OnboardingTasksAdmin = () => {
                   }
                 </td>
                 {/* <td className="p-3">{volunteer.currentTask?.task_name}</td> */}
-                <td className="flex flex-1 items-center pt-4 gap-2 min-w-64 ">
-                  <span className="bg-gray-100 rounded-sm p-1">{taskProgressString(volunteer)}</span>
-                  <span className="text-sm">{volunteer.currentTask.task_name}</span>
+                <td className="pt-4 min-w-64">
+                  <div className="flex items-center gap-2 w-full">
+                    <span className="bg-gray-100 rounded-sm p-1 whitespace-nowrap">{taskProgressString(volunteer)}</span>
+
+                    <span className="text-sm overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">
+                      {volunteer.currentTask.task_name}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="inline-flex justify-center items-center"
+                      onClick={() => onCopyTemplate(volunteer.currentTask.task_name)}
+                    >
+                      <FiCopy className="text-base" />
+                    </button>
+                  </div>
                 </td>
                 <td className="p-3">
                   {volunteer.currentTask?.createdAt.slice(5,7)+"/"+volunteer.currentTask?.createdAt.slice(8,10)+"/"+volunteer.currentTask?.createdAt.slice(2,4)}
