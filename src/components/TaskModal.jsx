@@ -11,25 +11,50 @@ const TaskModal = ({
   editView = false,
   onCopyTemplate,
 }) => {
-  const [task, setTask] = useState({
-    task_name: "",
-    template: "",
-  });
+  // const [task, setTask] = useState({
+  //   task_name: "",
+  //   template: "",
+  // });
 
-  useEffect(() => {
-    if (initialTask) {
+  // useEffect(() => {
+  //   if (initialTask) {
+  //     setTask({
+  //       task_name: initialTask.task_name || "",
+  //       template: initialTask.description || "",
+  //     });
+  //     if (initialTask.taskName == "All onboarding tasks completed") {
+  //       setTask({
+  //         task_name: initialTask.taskName,
+  //         template: initialTask.taskName,
+  //       });
+  //     }
+  //   }
+  // }, [initialTask]);
+
+  const [task, setTask] = useState({
+  task_name: "",
+  template: "",
+  due_date: 1, // NEW
+});
+
+useEffect(() => {
+  if (initialTask) {
+    setTask({
+      task_name: initialTask.task_name || "",
+      template: initialTask.description || "",
+      due_date: initialTask.due_date || 1, // NEW
+    });
+
+    if (initialTask.taskName === "All onboarding tasks completed") {
       setTask({
-        task_name: initialTask.taskName || "",
-        template: initialTask.description || "",
+        task_name: initialTask.taskName,
+        template: initialTask.taskName,
+        due_date: 1, // Reset due_date
       });
-      if (initialTask.taskName == "All onboarding tasks completed") {
-        setTask({
-          task_name: initialTask.taskName,
-          template: initialTask.taskName,
-        });
-      }
     }
-  }, [initialTask]);
+  }
+}, [initialTask]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -101,6 +126,54 @@ const TaskModal = ({
                       readOnly={editView || isTemplateView}
                     />
                   </div>
+                  {/* {!editView ? 
+                  (<div>
+                      <label
+                      htmlFor="task_name"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Relative Due Date*
+                    </label>
+
+                  </div>) 
+                  : null} */}
+                  {!isTemplateView && !editView && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Relative Due Date (in days)*
+                      </label>
+                      <div className="mt-1 flex items-center space-x-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTask((prev) => ({
+                              ...prev,
+                              due_date: Math.max(1, prev.due_date - 1),
+                            }))
+                          }
+                          className="px-2 py-1 text-lg bg-gray-200 rounded hover:bg-gray-300"
+                          disabled={task.due_date <= 1}
+                        >
+                          -
+                        </button>
+                        <span className="text-lg font-medium">{task.due_date}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTask((prev) => ({
+                              ...prev,
+                              due_date: Math.min(10, prev.due_date + 1),
+                            }))
+                          }
+                          className="px-2 py-1 text-lg bg-gray-200 rounded hover:bg-gray-300"
+                          disabled={task.due_date >= 10}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mb-4">
                     <label
                       htmlFor="template"
