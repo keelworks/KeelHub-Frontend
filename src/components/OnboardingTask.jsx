@@ -58,6 +58,7 @@ const OnboardingTasks = () => {
       await axios.post('http://localhost:3001/api/tasks/onboarding/create', {
         task_name: newTask.task_name,
         description: newTask.template, 
+        due_date: newTask.due_date, // NEW
       });
       fetchTasks(); 
       setIsTaskModalOpen(false);
@@ -76,6 +77,7 @@ const OnboardingTasks = () => {
       await axios.put(`http://localhost:3001/api/tasks/${selectedTask.id}`, {
         task_name: updatedTask.task_name,
         description: updatedTask.template,
+        due_date: updatedTask.due_date, // NEW
       });
       fetchTasks();
       setIsTaskModalOpen(false);

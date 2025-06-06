@@ -23,7 +23,7 @@ const OnboardingTasksAdmin = () => {
   const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isConfirmDeletModalOpen, setIsConfirmDeletModalOpen] = useState(false);
-  const [currTask, setCurrTask] = useState({ taskName: "", description: "" });
+  const [currTask, setCurrTask] = useState({ task_name: "", description: "" });
   const [currVolunteerId, setCurrVolunteerId] = useState("");
   const [totalNoOfVolunteersWithActiveTasks, setTotalNoOfVolunteersWithActiveTasks] = useState(0)
 
@@ -68,7 +68,7 @@ const OnboardingTasksAdmin = () => {
     setIsTemplateModalOpen(true);
     // Update the currTask state
     setCurrTask({
-      taskName: task_name || "", // Fallback to an empty string if task_name is undefined
+      task_name: task_name || "", // Fallback to an empty string if task_name is undefined
       description: description || "", // Fallback to an empty string if description is undefined
     });
   };
@@ -309,6 +309,14 @@ const OnboardingTasksAdmin = () => {
     }
   };
 
+  //copy from view task modal
+    const handleCopyTemplate = () => {
+    if (currTask && currTask.description) {
+      navigator.clipboard.writeText(currTask.description)
+        .then(() => alert('Template copied to clipboard!'))
+        .catch(err => console.error('Failed to copy template: ', err));
+    }
+  };
 
 
   return (
@@ -618,7 +626,7 @@ const OnboardingTasksAdmin = () => {
         initialTask={currTask}
         editView={true}
         isTemplateView={false}
-        // onCopyTemplate={handleCopyTemplate}
+        onCopyTemplate={handleCopyTemplate}
       />
       <ConfirmDeleteModal
         isOpen={isConfirmDeletModalOpen}
