@@ -41,11 +41,14 @@ const TwoFactorSetUp = () =>  {
           currentUser
         }); 
 
-        console.log("response",response)
+        // console.log("response",response)
+        // console.log(currentUser.role === 'admin')
 
-        (currentUser.role === admin)?
-        navigate('/admin-details',{replace:true}):
-        navigate('/dashboard',{replace:true})
+        if (currentUser.role === 'admin') {
+          navigate('/admin-details', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
         
       }catch(e){
         setError(true);
