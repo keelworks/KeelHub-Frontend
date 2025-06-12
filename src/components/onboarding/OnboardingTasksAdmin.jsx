@@ -26,6 +26,8 @@ const OnboardingTasksAdmin = () => {
   const [currTask, setCurrTask] = useState({ task_name: "", description: "" });
   const [currVolunteerId, setCurrVolunteerId] = useState("");
   const [totalNoOfVolunteersWithActiveTasks, setTotalNoOfVolunteersWithActiveTasks] = useState(0)
+  const [sortBy, setSortBy] = useState('name'); // Default sort by name
+  const [sortOrder, setSortOrder] = useState('asc'); // Default ascending
 
   //for tasks dropdown menu
   const [tasks, setTasks] = useState([]);
@@ -146,30 +148,63 @@ const OnboardingTasksAdmin = () => {
   const [pageSize, setPageSize] = useState(10)
   const volunteersPerPage = 8;
 
+  // const fetchVolunteers = async () => {
+  //   try {
+  //     // fetchAllVolunteersForRole();
+  //     const response = await axios.get(
+  //       `http://localhost:3001/api/volunteer-tasks/admin/volunteers/paginationAndFilters?page=${currentPage}&pageSize=${pageSize}&taskId=${filter.taskId}&taskStatus=${filter.status}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  //     console.log("Volunteers Data", response.data.data);
+  //     setVolunteers(response.data.data);
+  //     setFilteredVolunteers(response.data.data);
+  //     setTotalNoOfVolunteersWithActiveTasks(response.data.totalActiveTasks)
+  //   } catch (error) {
+  //     console.log(error.response);
+  //   }
+  // };
+
+  // New fetchVolunteers with additional params passed to the backend
   const fetchVolunteers = async () => {
-    try {
-      // fetchAllVolunteersForRole();
-      const response = await axios.get(
-        `http://localhost:3001/api/volunteer-tasks/admin/volunteers/paginationAndFilters?page=${currentPage}&pageSize=${pageSize}&taskId=${filter.taskId}&taskStatus=${filter.status}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Volunteers Data", response.data.data);
-      setVolunteers(response.data.data);
-      setFilteredVolunteers(response.data.data);
-      setTotalNoOfVolunteersWithActiveTasks(response.data.totalActiveTasks)
-    } catch (error) {
-      console.log(error.response);
+  try {
+    console.log("check", sortBy, sortOrder)
+    const response = await axios.get(
+      `http://localhost:3001/api/volunteer-tasks/admin/volunteers/paginationAndFilters?page=${currentPage}&pageSize=${pageSize}&taskId=${filter.taskId}&taskStatus=${filter.status}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log("Volunteers Data", response.data.data);
+    console.log("response.data.data",response.data.data)
+    setVolunteers(response.data.data);
+    setFilteredVolunteers(response.data.data);
+    setTotalNoOfVolunteersWithActiveTasks(response.data.totalActiveTasks);
+  } catch (error) {
+    console.log(error.response);
+  }
+};
+
+  // handle sort functionality for any column(name/dueDate/dateCreated)
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
     }
+    setCurrentPage(1); // Reset to the first page
   };
 
   useEffect(() => {
     fetchAllTasks();
     fetchVolunteers();
-  }, [reload,filter,currentPage,pageSize]);
+  }, [reload,filter,currentPage,pageSize,sortBy, sortOrder]);
 
 
 
@@ -209,97 +244,97 @@ const OnboardingTasksAdmin = () => {
   //Applying sort on columns name, dueDate and dateCreated.
 
   // SORT BY NAME
-  const[nameSort,setNameSort] = useState(false);
-  const sortByName = () => {
-    console.log("here")
-    let newOrder;
-    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
-    console.log(arr)
-    if (nameSort) {
-      newOrder = [...arr].sort((a, b) => {
-        const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
-        const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
+  // const[nameSort,setNameSort] = useState(false);
+  // const sortByName = () => {
+  //   console.log("here")
+  //   let newOrder;
+  //   let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+  //   console.log(arr)
+  //   if (nameSort) {
+  //     newOrder = [...arr].sort((a, b) => {
+  //       const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
+  //       const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
 
-        if (nameA < nameB) {
-          return -1;
-        }
-        if (nameA > nameB) {
-          return 1;
-        }
+  //       if (nameA < nameB) {
+  //         return -1;
+  //       }
+  //       if (nameA > nameB) {
+  //         return 1;
+  //       }
 
-        return 0;
-      });
-    } else {
-      newOrder = [...arr].sort((a, b) => {
-        const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
-        const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
+  //       return 0;
+  //     });
+  //   } else {
+  //     newOrder = [...arr].sort((a, b) => {
+  //       const nameA = `${a.firstName} ${a.lastName}`.toUpperCase();
+  //       const nameB = `${b.firstName} ${b.lastName}`.toUpperCase();
 
-        if (nameA < nameB) {
-          return 1;
-        }
-        if (nameA > nameB) {
-          return -1;
-        }
+  //       if (nameA < nameB) {
+  //         return 1;
+  //       }
+  //       if (nameA > nameB) {
+  //         return -1;
+  //       }
 
-        return 0;
-      });
-    }
-    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
-    // setFilteredVolunteers(newOrder);
-    setNameSort(!nameSort);
-  };
+  //       return 0;
+  //     });
+  //   }
+  //   (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+  //   // setFilteredVolunteers(newOrder);
+  //   setNameSort(!nameSort);
+  // };
 
   // SORT BY DUE DATE
 
-  const [dueDateSort,setDueDateSort] = useState(false)
+  // const [dueDateSort,setDueDateSort] = useState(false)
 
-  const sortByDueDate = () => {
-    let newOrder;
-    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
-    if (dueDateSort) {
-      newOrder = [...arr].sort((a, b) => {
-        const dateA = new Date(a.currentTask.dueDate);
-        const dateB = new Date(b.currentTask.dueDate);
-        return dateA - dateB;
-      });
-    } else {
-      newOrder = [...arr].sort((a, b) => {
-        const dateA = new Date(a.currentTask.dueDate);
-        const dateB = new Date(b.currentTask.dueDate);
-        return dateB - dateA;
-      });
-    }
-    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
-    setDueDateSort(!dueDateSort);
-    // setFilteredVolunteers(newOrder);
-  };
+  // const sortByDueDate = () => {
+  //   let newOrder;
+  //   let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+  //   if (dueDateSort) {
+  //     newOrder = [...arr].sort((a, b) => {
+  //       const dateA = new Date(a.currentTask.dueDate);
+  //       const dateB = new Date(b.currentTask.dueDate);
+  //       return dateA - dateB;
+  //     });
+  //   } else {
+  //     newOrder = [...arr].sort((a, b) => {
+  //       const dateA = new Date(a.currentTask.dueDate);
+  //       const dateB = new Date(b.currentTask.dueDate);
+  //       return dateB - dateA;
+  //     });
+  //   }
+  //   (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+  //   setDueDateSort(!dueDateSort);
+  //   // setFilteredVolunteers(newOrder);
+  // };
 
   // SORT BY DATE CREATED
 
-  const [createDateSort,setCreateDateSort] = useState(false)
+  // const [createDateSort,setCreateDateSort] = useState(false)
 
-  const sortByCreateDate = () => {
-    let newOrder;
-    let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
-    console.log(arr)
-    if (createDateSort) {
-      newOrder = [...arr].sort((a, b) => {
-        const dateA = new Date(a.currentTask.createdAt);
-        const dateB = new Date(b.currentTask.createdAt);
-        return dateA - dateB;
-      });
-    } else {
-      newOrder = [...arr].sort((a, b) => {
-        const dateA = new Date(a.currentTask.createdAt);
-        const dateB = new Date(b.currentTask.createdAt);
-        return dateB - dateA;
-      });
-    }
-    (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
-    setCreateDateSort(!createDateSort);
-    console.log("complete")
-    // setFilteredVolunteers(newOrder);
-  };
+  // const sortByCreateDate = () => {
+  //   let newOrder;
+  //   let arr = (filter.status || filter.task)? filteredVolunteers : volunteers
+  //   console.log(arr)
+  //   if (createDateSort) {
+  //     newOrder = [...arr].sort((a, b) => {
+  //       const dateA = new Date(a.currentTask.createdAt);
+  //       const dateB = new Date(b.currentTask.createdAt);
+  //       return dateA - dateB;
+  //     });
+  //   } else {
+  //     newOrder = [...arr].sort((a, b) => {
+  //       const dateA = new Date(a.currentTask.createdAt);
+  //       const dateB = new Date(b.currentTask.createdAt);
+  //       return dateB - dateA;
+  //     });
+  //   }
+  //   (filter.status || filter.task)? setFilteredVolunteers(newOrder) : setVolunteers(newOrder)
+  //   setCreateDateSort(!createDateSort);
+  //   console.log("complete")
+  //   // setFilteredVolunteers(newOrder);
+  // };
 
   const onCopyTemplate = (task) => {
     if (task) {
@@ -388,7 +423,7 @@ const OnboardingTasksAdmin = () => {
           <tr className="bg-gray-100 border-b border-gray-200">
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                onClick={sortByName}
+                onClick={() => handleSort('name')}
                 className="flex items-center hover:text-gray-900"
               >
                 Name <span className="ml-1">⏶⏷</span>
@@ -412,7 +447,8 @@ const OnboardingTasksAdmin = () => {
             </th>
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                onClick={sortByDueDate}
+                // onClick={sortByDueDate}
+                onClick={() => handleSort('due_date')}
                 className="flex items-center hover:text-gray-900"
               >
                 Due Date <span className="ml-1">⏶⏷</span>
@@ -421,7 +457,8 @@ const OnboardingTasksAdmin = () => {
             <th className="p-3 text-left font-semibold text-gray-600">Task</th>
             <th className="p-3 text-left font-semibold text-gray-600">
               <button
-                onClick={sortByCreateDate}
+                // onClick={sortByCreateDate}
+                onClick={() => handleSort('date_created')}
                 className="flex items-center hover:text-gray-900"
               >
                 Date Created <span className="ml-1">⏶⏷</span>
@@ -508,7 +545,7 @@ const OnboardingTasksAdmin = () => {
                     <span className="bg-gray-100 rounded-sm p-1 whitespace-nowrap">{taskProgressString(volunteer)}</span>
 
                     <span className="text-sm overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">
-                      {volunteer.currentTask.task_name}
+                      {volunteer.currentTask?.task_name || "NA"}
                     </span>
 
                     <button
@@ -521,7 +558,7 @@ const OnboardingTasksAdmin = () => {
                   </div>
                 </td>
                 <td className="p-3">
-                  {volunteer.currentTask?.createdAt.slice(5,7)+"/"+volunteer.currentTask?.createdAt.slice(8,10)+"/"+volunteer.currentTask?.createdAt.slice(2,4)}
+                  {volunteer.currentTask?.createdAt.slice(5,7)+"/"+volunteer.currentTask?.createdAt.slice(8,10)+"/"+volunteer.currentTask?.createdAt.slice(2,4) || "NA"}
                 </td>
                 <td className="p-3">
                   <div className="relative">
