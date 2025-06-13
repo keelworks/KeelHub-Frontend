@@ -11,6 +11,7 @@ import TaskModal from "../TaskModal";
 import ConfirmDeleteModal from "../useraccess/ConfirmDeleteModal";
 import PaginationButtons from "../PaginationButtons";
 import { FiCopy } from "react-icons/fi";
+import EditDueDateModal from "./EditDueDateModal";
 
 const OnboardingTasksAdmin = () => {
   const { currentUser } = useContext(UserContext);
@@ -28,6 +29,8 @@ const OnboardingTasksAdmin = () => {
   const [totalNoOfVolunteersWithActiveTasks, setTotalNoOfVolunteersWithActiveTasks] = useState(0)
   const [sortBy, setSortBy] = useState('name'); // Default sort by name
   const [sortOrder, setSortOrder] = useState('asc'); // Default ascending
+  const[isTaskModalOpen,setIsTaskModalOpen] = useState(false)
+  const[selectedTask,setSelectedTask] = useState(null);
 
   //for tasks dropdown menu
   const [tasks, setTasks] = useState([]);
@@ -73,6 +76,21 @@ const OnboardingTasksAdmin = () => {
       task_name: task_name || "", // Fallback to an empty string if task_name is undefined
       description: description || "", // Fallback to an empty string if description is undefined
     });
+  };
+
+    const handleEditTaskSubmit = async (updatedTask) => {
+    try {
+      await axios.put(`http://localhost:3001/api/tasks/${selectedTask.id}`, {
+        task_name: updatedTask.task_name,
+        description: updatedTask.template,
+        due_date: updatedTask.due_date, // NEW
+      });
+      // fetchTasks();
+      setIsTaskModalOpen(false);
+      setIsEditMode(false);
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
   };
 
   const handleOnboaringComplete = (volunteerId) => {
@@ -580,6 +598,9 @@ const OnboardingTasksAdmin = () => {
                       <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-xl z-20 border border-gray-200">
                         <button
                           // onClick={handleEditProfile}
+                          onClick={()=>{
+                            setIsTaskModalOpen(true)
+                          }}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                         >
                           Edit Task
@@ -670,6 +691,17 @@ const OnboardingTasksAdmin = () => {
         OnboardingCompleteConfirmation={true}
         onClose={() => setIsConfirmDeletModalOpen(false)}
         onConfirm={handleConfirmDelete}
+      />
+      <EditDueDateModal
+        isOpen={isTaskModalOpen}
+        closeModal={() => {
+          setIsTaskModalOpen(false);
+          setIsEditMode(false);
+          setSelectedTask(null);
+        }}
+        onSubmit={handleEditTaskSubmit}
+        initialTask={selectedTask}
+        isTemplateView={false}
       />
     </div>
   );

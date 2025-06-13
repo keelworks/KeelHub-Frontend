@@ -111,7 +111,7 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
     onClose();
   };
 
-  const handleSubmit = async (e) => {
+  const   handleSubmit = async (e) => {
     e.preventDefault();
     console.log("formdata: ", formData);
 
@@ -231,7 +231,7 @@ const AssignVolunteerTask = ({ onSuccess, isOpen, onClose }) => {
       console.log("GET REQUEST DONE");
 
       // Check if the current status is already "in_progress"
-      if (currentVolunteer.data.status === "in_progress") {
+      if (currentVolunteer.data.status === "In Progress") {
         console.warn("No changes detected, skipping request");
       } else {
         // Proceed with the update if the status is different
